@@ -1,0 +1,251 @@
+---
+openapi: 3.0.0
+info:
+  title: DwiLive REST API
+  description: |
+    API for managing users, chat rooms, and memberships for the DwiLive application.
+    This API handles the persistence layer (finding users, creating rooms) while Socket.io handles real-time messaging.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local Development Server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    # --- DATA MODELS ---
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        username:
+          type: string
+          example: ahmed_dev
+        displayName:
+          type: string
+          example: Ahmed Engineer
+        avatarUrl:
+          type: string
+          example: https://dwi.live/avatars/1.png
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: room_987654321
+        type:
+          type: string
+          enum: [direct, group]
+          example: group
+        name:
+          type: string
+          description: Name of the group. For direct chats, this might be empty or
+            auto-generated.
+          example: Project Alpha Team
+        isPrivate:
+          type: boolean
+          default: true
+          description: If false, the room might be searchable in a public directory.
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        lastMessage:
+          $ref: '#/components/schemas/MessageSnippet'
+        createdAt:
+          type: string
+          format: date-time
+    MessageSnippet:
+      type: object
+      description: A preview of the last message sent in a room
+      properties:
+        content:
+          type: string
+          example: Sounds good, see you then!
+        timestamp:
+          type: string
+          format: date-time
+
+    # --- REQUEST BODIES ---
+    CreateRoomRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [direct, group]
+        participants:
+          type: array
+          description: Array of User IDs to include initially. For 'direct', send
+            1 ID.
+          items:
+            type: string
+        name:
+          type: string
+          description: Required if type is 'group'
+        isPrivate:
+          type: boolean
+          default: true
+    AddMemberRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+          description: The ID of the user to add to the group
+security:
+  - bearerAuth: []
+paths:
+  # ----------------------------
+  # 1. LIST CHAT ROOMS
+  # ----------------------------
+  /rooms:
+    get:
+      summary: List my rooms
+      description: Returns all direct and group chat rooms the authenticated user
+        has joined.
+      tags: [Rooms]
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '401':
+          description: Unauthorized
+
+    # ----------------------------
+    # 3 & 4. CREATE ROOM (Direct or Group)
+    # ----------------------------
+    post:
+      summary: Create a new room
+      description: >
+        Creates a new chat room.  If type is 'direct' and a room already exists, it
+        returns the existing room.
+        If type is 'group', it creates a new room with the specified name and privacy.
+      tags: [Rooms]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '200':
+          description: Existing direct room returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+
+  # ----------------------------
+  # 5. ADD USER TO GROUP
+  # ----------------------------
+  /rooms/{roomId}/members:
+    post:
+      summary: Add a member to a group
+      tags: [Rooms]
+      parameters:
+        - in: path
+          name: roomId
+          schema:
+            type: string
+          required: true
+          description: The ID of the group room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '200':
+          description: User added successfully
+        '400':
+          description: Room is not a group or User already in room
+        '403':
+          description: Not authorized to add members (Admin only)
+
+  # ----------------------------
+  # 6. GET HISTORY (Essential Extra)
+  # ----------------------------
+  /rooms/{roomId}/messages:
+    get:
+      summary: Get room message history
+      tags: [Rooms]
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: before
+          description: Cursor for pagination (timestamp)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    content:
+                      type: string
+                    senderId:
+                      type: string
+                    createdAt:
+                      type: string
+
+  # ----------------------------
+  # 2. SEARCH USERS
+  # ----------------------------
+  /users/search:
+    get:
+      summary: Search for users
+      description: Search for users by exact or partial username match to start a
+        chat with.
+      tags: [Users]
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: The username string to search for
+      responses:
+        '200':
+          description: List of matching users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'

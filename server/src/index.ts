@@ -1,25 +1,33 @@
 import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
+import { setupDocs } from "./docs/index.js";
+import config from "./config/index.js";
 
 const app = express();
-const PORT = process.env.PORT;
 
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: config.CORS_ORIGIN,
     }),
 );
+
+await setupDocs(app);
 
 app.get("/", (req, res) => {
     res.send("Hello World!");
 });
 
 const startServer = async () => {
-    await connectDB();
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-    });
+    try {
+        await connectDB(config.MONGODB_URI);
+        app.listen(config.PORT, () => {
+            console.log(`Server is running on port ${config.PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server", error);
+        process.exit(1);
+    }
 };
 
 startServer();

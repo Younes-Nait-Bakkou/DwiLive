@@ -29,3 +29,4 @@ lerna-debug.log*
 .cache
 .parcel-cache
 .env
+tmp/

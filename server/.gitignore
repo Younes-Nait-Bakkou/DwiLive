@@ -1,1 +1,31 @@
-node_modules/
+# Dependencies
+/node_modules
+/jspm_packages
+
+# Testing
+/coverage
+/.nyc_output
+
+# Production
+/build
+/dist
+/npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# Misc
+.DS_Store
+*.log
+*.gz
+*.tgz
+.cache
+.parcel-cache
+.env

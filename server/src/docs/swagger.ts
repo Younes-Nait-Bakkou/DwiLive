@@ -1,10 +1,11 @@
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
-import path from "path";
 import type { Express } from "express";
+import config from "../config/index.js";
+import path from "path";
 
 const openapiSpec = YAML.load(
-    path.join(global.ROOT_DIR, "./src/docs/openapi.yaml"),
+    path.join(config.ROOT_DIR, "./src/docs/openapi.yaml"),
 );
 
 export function setupSwagger(app: Express) {
@@ -20,7 +21,7 @@ export function setupSwagger(app: Express) {
 
     // Raw specs
     app.get("/openapi.yaml", (_req, res) => {
-        res.sendFile(path.join(__dirname, "./openapi.yaml"));
+        res.sendFile(path.join(config.ROOT_DIR, "./src/docs/openapi.yaml"));
     });
 
     app.get("/openapi.json", (_req, res) => {

@@ -6,6 +6,7 @@ declare global {
             MONGODB_URI: string;
         }
     }
+    var ROOT_DIR: string;
 }
 
 export {};

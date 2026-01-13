@@ -1,9 +1,7 @@
-import dotenv from "dotenv";
 import { z } from "zod";
 import path from "path";
 import { fileURLToPath } from "url";
-
-dotenv.config();
+import ms, { type StringValue } from "ms";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +12,12 @@ const configSchema = z.object({
     MONGODB_URI: z.string(),
     CORS_ORIGIN: z.string().default("http://localhost:5173"),
     JWT_SECRET: z.string().default("secret"),
-    JWT_EXPIRES_IN: z.string().default("30d"),
+    JWT_EXPIRES_IN: z
+        .string()
+        .default("30d")
+        .refine((value) => {
+            return typeof ms(value as StringValue) === "number";
+        }, "Invalid duration format (e.g., '1h', '2d')"),
     JWT_HEADER_PREFIX: z.string().default("Bearer"),
 });
 

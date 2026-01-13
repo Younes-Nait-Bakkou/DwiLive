@@ -17,7 +17,8 @@ const configSchema = z.object({
         .default("30d")
         .refine((value) => {
             return typeof ms(value as StringValue) === "number";
-        }, "Invalid duration format (e.g., '1h', '2d')"),
+        }, "Invalid duration format (e.g., '1h', '2d')")
+        .transform((value) => value as StringValue),
     JWT_HEADER_PREFIX: z.string().default("Bearer"),
 });
 

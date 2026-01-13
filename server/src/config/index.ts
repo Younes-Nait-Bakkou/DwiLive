@@ -13,6 +13,7 @@ const configSchema = z.object({
     PORT: z.string().default("3001"),
     MONGODB_URI: z.string(),
     CORS_ORIGIN: z.string().default("http://localhost:5173"),
+    JWT_SECRET: z.string().default("secret"),
 });
 
 const config = configSchema.parse(process.env);

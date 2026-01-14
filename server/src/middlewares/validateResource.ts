@@ -1,9 +1,8 @@
 import type { RequestHandler } from "express";
-import { ZodError } from "zod";
-import type { AnyZodObject } from "zod/v3";
+import z, { ZodError } from "zod";
 
 export const validate =
-    (schema: AnyZodObject): RequestHandler =>
+    (schema: z.ZodType): RequestHandler =>
     async (req, res, next) => {
         try {
             await schema.parseAsync({

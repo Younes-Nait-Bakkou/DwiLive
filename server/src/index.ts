@@ -1,27 +1,30 @@
 import express from "express";
 import cors from "cors";
+import { createServer } from "http";
 import connectDB from "./config/db.js";
-import { setupDocs } from "./docs/index.js";
 import config from "./config/index.js";
+import globalRouter from "./routes/index.js";
 
 const app = express();
+const httpServer = createServer(app);
 
+app.use(express.json());
 app.use(
     cors({
         origin: config.CORS_ORIGIN,
     }),
 );
 
-await setupDocs(app);
+app.use("/api", globalRouter);
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
     res.send("Hello World!");
 });
 
 const startServer = async () => {
     try {
         await connectDB(config.MONGODB_URI);
-        app.listen(config.PORT, () => {
+        httpServer.listen(config.PORT, () => {
             console.log(`Server is running on port ${config.PORT}`);
         });
     } catch (error) {

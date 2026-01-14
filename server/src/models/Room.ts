@@ -57,4 +57,10 @@ const roomSchema = new Schema<IRoom>(
     },
 );
 
+roomSchema.methods.isAdmin = function (user?: IUser): boolean {
+    return (
+        !!user && this.admin && this.admin.toString() !== user._id.toString()
+    );
+};
+
 export default mongoose.model<IRoom>("Room", roomSchema);

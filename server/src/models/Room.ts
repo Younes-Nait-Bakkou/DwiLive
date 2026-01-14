@@ -12,6 +12,8 @@ export interface IRoom extends Document {
     lastMessage?: PopulatedDoc<IMessage>;
     createdAt: Date;
     updatedAt: Date;
+    isAdmin(user?: IUser): boolean;
+    isUserParticipant(userId: mongoose.Types.ObjectId | string): boolean;
 }
 
 const roomSchema = new Schema<IRoom>(
@@ -59,7 +61,16 @@ const roomSchema = new Schema<IRoom>(
 
 roomSchema.methods.isAdmin = function (user?: IUser): boolean {
     return (
-        !!user && this.admin && this.admin.toString() !== user._id.toString()
+        !!user && this.admin && this.admin.toString() === user._id.toString()
+    );
+};
+
+roomSchema.methods.isUserParticipant = function (
+    userId: mongoose.Types.ObjectId | string,
+): boolean {
+    return this.participants.some(
+        (p: IUser | mongoose.Types.ObjectId) =>
+            p.toString() === userId.toString(),
     );
 };
 

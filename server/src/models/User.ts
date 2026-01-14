@@ -54,8 +54,16 @@ userSchema.pre("save", async function () {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-userSchema.methods.comparePassword = async function (password: string) {
-    return bcrypt.compare(password, this.password);
+userSchema.methods.comparePassword = async function (
+    candidatePassword: string,
+): Promise<boolean> {
+    if (!this.password) {
+        throw new Error(
+            "Password not found on user document. Did you use .select('+password')?",
+        );
+    }
+
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
 export default mongoose.model<IUser>("User", userSchema);

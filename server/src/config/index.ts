@@ -2,6 +2,7 @@ import { z } from "zod";
 import path from "path";
 import { fileURLToPath } from "url";
 import ms, { type StringValue } from "ms";
+import { configDotenv } from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,8 @@ const configSchema = z.object({
         .transform((value) => value as StringValue),
     JWT_HEADER_PREFIX: z.string().default("Bearer"),
 });
+
+configDotenv();
 
 const config = configSchema.parse(process.env);
 

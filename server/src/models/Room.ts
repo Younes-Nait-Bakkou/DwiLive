@@ -8,6 +8,7 @@ export interface IRoom extends Document {
     name?: string;
     isPrivate: boolean;
     participants: PopulatedDoc<IUser>[];
+    admin?: PopulatedDoc<IUser>;
     lastMessage?: PopulatedDoc<IMessage>;
     createdAt: Date;
     updatedAt: Date;
@@ -34,6 +35,13 @@ const roomSchema = new Schema<IRoom>(
                 ref: "User",
             },
         ],
+        admin: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: function (this: IRoom) {
+                return this.type === "group";
+            },
+        },
         lastMessage: {
             type: Schema.Types.ObjectId,
             ref: "Message",

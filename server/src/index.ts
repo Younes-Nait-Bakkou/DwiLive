@@ -17,10 +17,6 @@ app.use(
 
 app.use("/api", globalRouter);
 
-app.get("/", (_req, res) => {
-    res.send("Hello World!");
-});
-
 const startServer = async () => {
     try {
         await connectDB(config.MONGODB_URI);

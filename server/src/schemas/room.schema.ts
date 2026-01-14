@@ -1,12 +1,18 @@
 import { object, string, array, boolean, z } from "zod";
-import { objectId } from "../utils/zod.js";
+import { userIdSchema } from "./user.schema.js";
+import { createPrefixedIdSchema } from "../utils/zod.js";
+
+export const roomIdSchema = createPrefixedIdSchema("room", {
+    invalidError: "Room ID is invalid",
+    requiredError: "Room ID is required",
+});
 
 export const createRoomSchema = object({
     body: object({
         type: z.enum(["direct", "group"], {
             error: "Type is required",
         }),
-        participants: array(objectId).optional().default([]),
+        participants: array(userIdSchema).optional().default([]),
         name: string().optional(),
         isPrivate: boolean(),
     }).superRefine((data, ctx) => {
@@ -31,10 +37,10 @@ export type CreateRoomRequest = z.infer<typeof createRoomSchema>;
 
 export const addMemberSchema = object({
     body: object({
-        userId: objectId,
+        userId: userIdSchema,
     }),
     params: object({
-        roomId: objectId,
+        roomId: roomIdSchema,
     }),
 });
 
@@ -42,8 +48,8 @@ export type AddMemberRequest = z.infer<typeof addMemberSchema>;
 
 export const removeMemberSchema = object({
     params: object({
-        roomId: objectId,
-        userId: objectId,
+        roomId: roomIdSchema,
+        userId: userIdSchema,
     }),
 });
 
@@ -51,7 +57,7 @@ export type RemoveMemberRequest = z.infer<typeof removeMemberSchema>;
 
 export const leaveRoomSchema = object({
     params: object({
-        roomId: objectId,
+        roomId: roomIdSchema,
     }),
 });
 
@@ -59,7 +65,7 @@ export type LeaveRoomRequest = z.infer<typeof leaveRoomSchema>;
 
 export const getMessagesSchema = object({
     params: object({
-        roomId: objectId,
+        roomId: roomIdSchema,
     }),
     query: object({
         limit: string().optional(),

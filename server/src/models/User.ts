@@ -37,7 +37,13 @@ const userSchema = new Schema<IUser>(
     {
         timestamps: true,
         versionKey: false,
-        toJSON: { virtuals: true },
+        toJSON: {
+            virtuals: true,
+            transform(_doc, ret) {
+                const { password: _password, ...safeUser } = ret;
+                return safeUser;
+            },
+        },
     },
 );
 

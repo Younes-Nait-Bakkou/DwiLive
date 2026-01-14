@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import User from "../models/User.js";
+import type { IJwtPayload } from "../controllers/auth.js";
 
 export const protect: RequestHandler = async (req, res, next) => {
     let token: string | undefined;
@@ -21,9 +22,9 @@ export const protect: RequestHandler = async (req, res, next) => {
                     .json({ message: "Not authorized, invalid token" });
             }
 
-            const decoded = jwt.verify(token, config.jwt.secret);
+            const payload = jwt.verify(token, config.jwt.secret) as IJwtPayload;
 
-            const user = await User.findById(decoded.valueOf);
+            const user = await User.findById(payload.id);
 
             if (!user) {
                 return res

@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
-import jwt, { type JwtPayload, type SignOptions } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import User from "../models/User.js";
 import config from "../config/index.js";
 import mongoose from "mongoose";

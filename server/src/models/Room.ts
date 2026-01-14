@@ -4,6 +4,7 @@ import type { IUser } from "./User.js";
 import type { IMessage } from "./Message.js";
 
 export interface IRoom extends Document {
+    id: string;
     type: "direct" | "group";
     name?: string;
     isPrivate: boolean;
@@ -52,9 +53,14 @@ const roomSchema = new Schema<IRoom>(
     {
         timestamps: true,
         versionKey: false,
-        id: true,
         toJSON: {
             virtuals: true,
+            transform(_doc, ret) {
+                const { _id, ...room } = ret;
+                room.id = `room_${_id}`;
+
+                return room;
+            },
         },
     },
 );

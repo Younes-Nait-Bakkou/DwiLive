@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export interface IUser extends Document {
+    id: string;
     username: string;
     password: string;
     displayName?: string;
@@ -40,8 +41,10 @@ const userSchema = new Schema<IUser>(
         toJSON: {
             virtuals: true,
             transform(_doc, ret) {
-                const { password: _password, ...safeUser } = ret;
-                return safeUser;
+                const { password: _password, _id, ...user } = ret;
+                user.id = `user_${_id}`;
+
+                return user;
             },
         },
     },

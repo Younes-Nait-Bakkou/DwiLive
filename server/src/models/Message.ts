@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IMessage extends Document {
+    id: string;
     roomId: mongoose.Types.ObjectId;
     senderId: mongoose.Types.ObjectId;
     content: string;
@@ -37,6 +38,12 @@ const messageSchema = new Schema<IMessage>(
         id: true,
         toJSON: {
             virtuals: true,
+            transform(_doc, ret) {
+                const { _id, ...msg } = ret;
+                msg.id = `msg_${_id}`;
+
+                return msg;
+            },
         },
     },
 );

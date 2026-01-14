@@ -72,8 +72,52 @@ components:
         timestamp:
           type: string
           format: date-time
+    Message:
+      type: object
+      description: A full message object
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        author:
+          $ref: '#/components/schemas/User'
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 
     # --- REQUEST BODIES ---
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 6
+        displayName:
+          type: string
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    UpdateUserRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
     CreateRoomRequest:
       type: object
       required: [type]
@@ -100,11 +144,116 @@ components:
         userId:
           type: string
           description: The ID of the user to add to the group
+
+    # --- RESPONSES ---
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
 security:
   - bearerAuth: []
 paths:
   # ----------------------------
-  # 1. LIST CHAT ROOMS
+  # 0. AUTHENTICATION
+  # ----------------------------
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Username already exists or invalid data
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  # ----------------------------
+  # 1. USERS
+  # ----------------------------
+  /users/me:
+    get:
+      summary: Get my profile
+      tags: [Users]
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: Update my profile
+      tags: [Users]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/search:
+    get:
+      summary: Search for users
+      description: Search for users by exact or partial username match to start a
+        chat with.
+      tags: [Users]
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: The username string to search for
+      responses:
+        '200':
+          description: List of matching users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  # ----------------------------
+  # 2. CHAT ROOMS
   # ----------------------------
   /rooms:
     get:
@@ -123,14 +272,10 @@ paths:
                   $ref: '#/components/schemas/Room'
         '401':
           description: Unauthorized
-
-    # ----------------------------
-    # 3 & 4. CREATE ROOM (Direct or Group)
-    # ----------------------------
     post:
       summary: Create a new room
       description: >
-        Creates a new chat room.  If type is 'direct' and a room already exists, it
+        Creates a new chat room. If type is 'direct' and a room already exists, it
         returns the existing room.
         If type is 'group', it creates a new room with the specified name and privacy.
       tags: [Rooms]
@@ -153,10 +298,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
-
-  # ----------------------------
-  # 5. ADD USER TO GROUP
-  # ----------------------------
   /rooms/{roomId}/members:
     post:
       summary: Add a member to a group
@@ -181,10 +322,28 @@ paths:
           description: Room is not a group or User already in room
         '403':
           description: Not authorized to add members (Admin only)
-
-  # ----------------------------
-  # 6. GET HISTORY (Essential Extra)
-  # ----------------------------
+  /rooms/{roomId}/members/{userId}:
+    delete:
+      summary: Remove a member or leave group
+      description: Remove a user from the group. If userId matches the authenticated
+        user, they leave the group.
+      tags: [Rooms]
+      parameters:
+        - in: path
+          name: roomId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Member removed successfully
+        '403':
+          description: Not authorized to remove this member
   /rooms/{roomId}/messages:
     get:
       summary: Get room message history
@@ -213,39 +372,5 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    content:
-                      type: string
-                    senderId:
-                      type: string
-                    createdAt:
-                      type: string
+                  $ref: '#/components/schemas/Message'
 
-  # ----------------------------
-  # 2. SEARCH USERS
-  # ----------------------------
-  /users/search:
-    get:
-      summary: Search for users
-      description: Search for users by exact or partial username match to start a
-        chat with.
-      tags: [Users]
-      parameters:
-        - in: query
-          name: q
-          schema:
-            type: string
-          required: true
-          description: The username string to search for
-      responses:
-        '200':
-          description: List of matching users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'

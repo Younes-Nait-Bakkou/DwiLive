@@ -1,15 +1,33 @@
-import type { RequestHandler } from "express";
-import z, { ZodError } from "zod";
+import type { RequestHandler, Request } from "express";
+import { z, ZodError } from "zod";
+
+type AnyRequestSchema = z.ZodType<{
+    body?: unknown;
+    query?: unknown;
+    params?: unknown;
+}>;
 
 export const validate =
-    (schema: z.ZodType): RequestHandler =>
+    (schema: AnyRequestSchema): RequestHandler =>
     async (req, res, next) => {
         try {
-            await schema.parseAsync({
+            const parsedData = await schema.parseAsync({
                 body: req.body,
                 query: req.query,
                 params: req.params,
             });
+
+            if (parsedData.body) {
+                req.body = parsedData.body;
+            }
+
+            if (parsedData.query) {
+                req.query = parsedData.query as Request["query"];
+            }
+
+            if (parsedData.params) {
+                req.params = parsedData.params as Request["params"];
+            }
 
             return next();
         } catch (error) {
@@ -20,7 +38,6 @@ export const validate =
                 });
                 return;
             }
-
             return next(error);
         }
     };

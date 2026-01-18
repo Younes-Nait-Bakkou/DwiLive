@@ -37,4 +37,12 @@ export const setupSockets = (io: Server) => {
             next(new Error("Authentication error: Invalid token"));
         }
     });
+
+    io.on(SocketEvent.CONNECT, (socket) => {
+        console.log(`User connected: ${socket.user.username}`);
+
+        socket.on(SocketEvent.DISCONNECT, () => {
+            console.log(`User disconnected: ${socket.user.username}`);
+        });
+    });
 };

@@ -50,11 +50,12 @@ const userSchema = new Schema<IUser>(
     },
 );
 
+import { hashPassword } from "../utils/password.js";
+
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await hashPassword(this.password);
 });
 
 userSchema.methods.comparePassword = async function (

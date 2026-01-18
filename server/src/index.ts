@@ -4,6 +4,8 @@ import { createServer } from "http";
 import connectDB from "./config/db.js";
 import config from "./config/index.js";
 import globalRouter from "./routes/index.js";
+import { Server } from "socket.io";
+import { setupSockets } from "./sockets/index.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -14,6 +16,16 @@ app.use(
         origin: config.CORS_ORIGIN,
     }),
 );
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: config.CORS_ORIGIN,
+        methods: ["GET", "POST"],
+        credentials: true,
+    },
+});
+
+setupSockets(io);
 
 app.use("/api", globalRouter);
 

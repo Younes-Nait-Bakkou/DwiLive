@@ -3,11 +3,19 @@ import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import User from "../models/User.js";
 import type { IJwtPayload } from "../controllers/auth.js";
+import { SocketEvent } from "../config/events.js";
 
 export const setupSockets = (io: Server) => {
     io.use(async (socket: Socket, next) => {
-        const token =
-            socket.handshake.auth.token || socket.handshake.query.token;
+        const prefix = config.jwt.prefix;
+        const authToken = socket.handshake.auth.token;
+        const queryToken = socket.handshake.query.token;
+
+        let token =
+            (authToken &&
+                authToken.startsWith(prefix) &&
+                authToken.split(" ")[1]) ||
+            queryToken;
 
         if (!token) {
             return next(new Error("Authentication error: No token provided"));

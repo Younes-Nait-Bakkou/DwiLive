@@ -9,6 +9,7 @@ import {
     type LeaveRoomRequest,
     type GetMessagesRequest,
 } from "../schemas/room.schema.js";
+import { log } from "node:console";
 
 export const createRoom: RequestHandler<
     object,
@@ -33,7 +34,7 @@ export const createRoom: RequestHandler<
             let room = await Room.findOne(roomFilter);
 
             if (room) {
-                await room.populate("participants");
+                await room.populate("participants admin");
                 return res.status(200).json(room);
             }
 
@@ -43,11 +44,12 @@ export const createRoom: RequestHandler<
                 isPrivate: true,
             });
 
-            await room.populate("participants");
+            await room.populate("participants admin");
             return res.status(201).json(room);
         }
 
         if (type === "group") {
+            console.log(participants);
             const room = await Room.create({
                 type: "group",
                 name: name!,
@@ -61,12 +63,13 @@ export const createRoom: RequestHandler<
                 admin: req.user._id,
             });
 
-            await room.populate("participants");
+            await room.populate("participants admin");
             return res.status(201).json(room);
         }
 
         return res.status(400).json({ message: "Invalid room type" });
     } catch (error: unknown) {
+        log(error);
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
         }
@@ -82,6 +85,7 @@ export const createRoom: RequestHandler<
 
 export const getRooms: RequestHandler = async (req, res) => {
     try {
+        console.log(req.user.id);
         const roomFilter: QueryFilter<IRoom> = {
             participants: req.user?._id,
         };
@@ -125,7 +129,7 @@ export const addMember: RequestHandler<
                 .json({ message: "Cannot add members to a direct chat" });
         }
 
-        if (room.isAdmin(req.user)) {
+        if (!room.isAdmin(req.user)) {
             return res
                 .status(403)
                 .json({ message: "Only the admin can add members" });
@@ -164,13 +168,13 @@ export const removeMember: RequestHandler<
             return res.status(404).json({ message: "Room not found" });
         }
 
-        if (room.type !== "group") {
+        if (room.type === "direct") {
             return res
                 .status(400)
                 .json({ message: "Cannot remove members from a direct chat" });
         }
 
-        if (room.isAdmin(req.user)) {
+        if (!room.isAdmin(req.user)) {
             return res
                 .status(403)
                 .json({ message: "Only the admin can remove members" });
@@ -278,6 +282,12 @@ export const leaveRoom: RequestHandler<LeaveRoomRequest["params"]> = async (
             return res
                 .status(400)
                 .json({ message: "You are not in this room" });
+        }
+
+        if (room.type === "direct") {
+            return res
+                .status(400)
+                .json({ message: "Cannot leave a direct chat" });
         }
 
         if (

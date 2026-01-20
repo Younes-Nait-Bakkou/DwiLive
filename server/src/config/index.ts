@@ -39,4 +39,3 @@ export default {
         prefix: config.JWT_HEADER_PREFIX,
     },
 };
-

@@ -4,7 +4,7 @@ import config from "../config/index.js";
 import User from "../models/User.js";
 import type { IJwtPayload } from "../controllers/auth.js";
 import { SocketEvent } from "../config/events.js";
-import { registerRoomHandlers } from "./handlers/roomHandler.js";
+import { registerConversationHandlers } from "./handlers/conversationHandler.js";
 import { jsonParseMiddleware } from "../middlewares/socket.middleware.js";
 
 export const setupSockets = (io: Server) => {
@@ -45,7 +45,7 @@ export const setupSockets = (io: Server) => {
 
         socket.use(jsonParseMiddleware);
 
-        registerRoomHandlers(io, socket);
+        registerConversationHandlers(io, socket);
 
         socket.on(SocketEvent.DISCONNECT, () => {
             console.log(`User disconnected: ${socket.user.username}`);

@@ -1,5 +1,5 @@
 import Message from "../../models/Message.js";
-import type { IRoom } from "../../models/Room.js";
+import type { IConversation } from "../../models/Conversation.js";
 import type { IUser } from "../../models/User.js";
 import type { Server, Socket } from "socket.io";
 import { SocketEvent } from "../../config/events.js";
@@ -7,13 +7,13 @@ import { isPopulated } from "../../utils/typeGuards.js";
 import { ErrorCodes } from "../../types/socket.response.d.js";
 import type { SocketResponse } from "../../types/socket.response.d.js";
 
-export const registerRoomHandlers = (io: Server, socket: Socket) => {
-    const joinRoom = async ({ roomId }: { roomId: string }) => {
-        socket.join(roomId);
+export const registerConversationHandlers = (io: Server, socket: Socket) => {
+    const joinConversation = async ({ conversationId }: { conversationId: string }) => {
+        socket.join(conversationId);
 
-        console.log(`User joined room: ${roomId}`);
-        socket.to(roomId).emit(SocketEvent.USER_JOINED_ROOM, {
-            roomId,
+        console.log(`User joined conversation: ${conversationId}`);
+        socket.to(conversationId).emit(SocketEvent.USER_JOINED_CONVERSATION, {
+            conversationId,
             user: {
                 id: socket.user.id,
                 username: socket.user.username,
@@ -21,22 +21,22 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         });
     };
 
-    const leaveRoom = async ({ roomId }: { roomId: string }) => {
-        socket.leave(roomId);
-        console.log(`User left room: ${roomId}`);
-        socket.to(roomId).emit(SocketEvent.USER_LEFT_ROOM, {
-            roomId,
+    const leaveConversation = async ({ conversationId }: { conversationId: string }) => {
+        socket.leave(conversationId);
+        console.log(`User left conversation: ${conversationId}`);
+        socket.to(conversationId).emit(SocketEvent.USER_LEFT_CONVERSATION, {
+            conversationId,
             userId: socket.user.id,
         });
     };
 
     const sendMessage = async (
         {
-            roomId,
+            conversationId,
             content,
             type,
         }: {
-            roomId: string;
+            conversationId: string;
             content: string;
             type: "text" | "image";
         },
@@ -45,7 +45,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         try {
             if (!content) {
                 console.warn(
-                    `User ${socket.user.id} sent empty message to room ${roomId}.`,
+                    `User ${socket.user.id} sent empty message to conversation ${conversationId}.`,
                 );
                 return callback({
                     status: "ERROR",
@@ -54,10 +54,10 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
                 });
             }
 
-            const isMember = await socket.user.isInRoom(roomId);
+            const isMember = await socket.user.isInConversation(conversationId);
             if (!isMember) {
                 console.warn(
-                    `User ${socket.user.id} unauthorized for room ${roomId}`,
+                    `User ${socket.user.id} unauthorized for conversation ${conversationId}`,
                 );
                 return callback({
                     status: "ERROR",
@@ -67,16 +67,16 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
             }
 
             const message = await Message.create({
-                room: roomId,
+                conversation: conversationId,
                 content,
                 type,
                 sender: socket.user._id,
             });
 
-            const populatedMessage = await message.populate(["sender", "room"]);
+            const populatedMessage = await message.populate(["sender", "conversation"]);
 
             const sender = populatedMessage.sender;
-            const room = populatedMessage.room;
+            const conversation = populatedMessage.conversation;
 
             if (!isPopulated<IUser>(sender)) {
                 console.error(
@@ -90,9 +90,9 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
                 });
             }
 
-            if (!isPopulated<IRoom>(room)) {
+            if (!isPopulated<IConversation>(conversation)) {
                 console.error(
-                    "Internal Server Error: Message room not populated for message:",
+                    "Internal Server Error: Message conversation not populated for message:",
                     message._id,
                 );
                 return callback({
@@ -103,7 +103,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
             }
 
             const payload = {
-                id: room.id,
+                id: conversation.id,
                 author: {
                     id: sender?.id,
                     username: sender?.username,
@@ -113,7 +113,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
                 createdAt: populatedMessage.createdAt,
             };
 
-            io.to(roomId).emit(SocketEvent.RECEIVE_MESSAGE, payload);
+            io.to(conversationId).emit(SocketEvent.RECEIVE_MESSAGE, payload);
             callback({ status: "OK", data: payload });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in sendMessage:", err);
@@ -125,24 +125,24 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         }
     };
 
-    const startTyping = ({ roomId }: { roomId: string }) => {
-        socket.to(roomId).emit(SocketEvent.DISPLAY_TYPING, {
-            roomId,
+    const startTyping = ({ conversationId }: { conversationId: string }) => {
+        socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
+            conversationId,
             username: socket.user.username,
             isTyping: true,
         });
     };
 
-    const stopTyping = ({ roomId }: { roomId: string }) => {
-        socket.to(roomId).emit(SocketEvent.DISPLAY_TYPING, {
-            roomId,
+    const stopTyping = ({ conversationId }: { conversationId: string }) => {
+        socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
+            conversationId,
             username: socket.user.username,
             isTyping: false,
         });
     };
 
-    socket.on(SocketEvent.JOIN_ROOM, joinRoom);
-    socket.on(SocketEvent.LEAVE_ROOM, leaveRoom);
+    socket.on(SocketEvent.JOIN_CONVERSATION, joinConversation);
+    socket.on(SocketEvent.LEAVE_CONVERSATION, leaveConversation);
     socket.on(SocketEvent.SEND_MESSAGE, sendMessage);
     socket.on(SocketEvent.TYPING_START, startTyping);
     socket.on(SocketEvent.TYPING_STOP, stopTyping);

@@ -2,11 +2,11 @@ export enum SocketEvent {
     CONNECT = "connect",
     DISCONNECT = "disconnect",
 
-    // Room events
-    JOIN_ROOM = "room:join",
-    LEAVE_ROOM = "room:leave",
-    USER_JOINED_ROOM = "room:user_joined",
-    USER_LEFT_ROOM = "room:user_left",
+    // Conversation events
+    JOIN_CONVERSATION = "conversation:join",
+    LEAVE_CONVERSATION = "conversation:leave",
+    USER_JOINED_CONVERSATION = "conversation:user_joined",
+    USER_LEFT_CONVERSATION = "conversation:user_left",
 
     // Message events
     SEND_MESSAGE = "message:send",

@@ -4,7 +4,7 @@ info:
   version: 1.0.1
   description: |
     The WebSocket contract for DwiLive (v3.0.0).
-    Handles real-time events that occur AFTER a user has fetched their room list via REST.
+    Handles real-time events that occur AFTER a user has fetched their conversation list via REST.
     **Protocol:** Socket.io                     
     **Auth:** Handshake query `?token=JWT` (or `username` for MVP)
 servers:
@@ -17,16 +17,16 @@ channels:
     address: /
     messages:
       # --- DEFINITIONS IN THE CHANNEL ---
-      clientJoinRoom:
-        $ref: '#/components/messages/ClientJoinRoom'
+      clientJoinConversation:
+        $ref: '#/components/messages/ClientJoinConversation'
       clientSendMessage:
         $ref: '#/components/messages/ClientSendMessage'
       clientTypingStart:
         $ref: '#/components/messages/ClientTypingStart'
       clientTypingStop:
         $ref: '#/components/messages/ClientTypingStop'
-      clientLeaveRoom:
-        $ref: '#/components/messages/ClientLeaveRoom'
+      clientLeaveConversation:
+        $ref: '#/components/messages/ClientLeaveConversation'
       serverReceiveMessage:
         $ref: '#/components/messages/ServerReceiveMessage'
       serverUserJoined:
@@ -39,13 +39,13 @@ operations:
   # ----------------------------
   # CLIENT -> SERVER (Receiving)
   # ----------------------------
-  onJoinRoom:
+  onJoinConversation:
     action: receive
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Client asks to join a room
+    summary: Client asks to join a conversation
     messages:
-      - $ref: '#/channels/rootChannel/messages/clientJoinRoom'
+      - $ref: '#/channels/rootChannel/messages/clientJoinConversation'
   onSendMessage:
     action: receive
     channel:
@@ -67,13 +67,13 @@ operations:
     summary: Client indicates typing status has stopped
     messages:
       - $ref: '#/channels/rootChannel/messages/clientTypingStop'
-  onLeaveRoom:
+  onLeaveConversation:
     action: receive
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Client explicitly leaves a room
+    summary: Client explicitly leaves a conversation
     messages:
-      - $ref: '#/channels/rootChannel/messages/clientLeaveRoom'
+      - $ref: '#/channels/rootChannel/messages/clientLeaveConversation'
 
   # ----------------------------
   # SERVER -> CLIENT (Sending)
@@ -82,21 +82,21 @@ operations:
     action: send
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Server broadcasts a new message to the room
+    summary: Server broadcasts a new message to the conversation
     messages:
       - $ref: '#/channels/rootChannel/messages/serverReceiveMessage'
   notifyUserJoined:
     action: send
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Server notifies room that someone joined
+    summary: Server notifies conversation that someone joined
     messages:
       - $ref: '#/channels/rootChannel/messages/serverUserJoined'
   notifyUserLeft:
     action: send
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Server notifies room that someone left
+    summary: Server notifies conversation that someone left
     messages:
       - $ref: '#/channels/rootChannel/messages/serverUserLeft'
   broadcastTyping:
@@ -109,14 +109,14 @@ operations:
 components:
   messages:
     # --- MESSAGE COMPONENT DEFINITIONS ---
-    ClientJoinRoom:
-      name: room:join
-      title: Join Room
+    ClientJoinConversation:
+      name: conversation:join
+      title: Join Conversation
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
             type: string
             format: uuid
     ClientSendMessage:
@@ -124,9 +124,9 @@ components:
       title: Send Message
       payload:
         type: object
-        required: [roomId, content]
+        required: [conversationId, content]
         properties:
-          roomId:
+          conversationId:
             type: string
             format: uuid
           content:
@@ -140,27 +140,27 @@ components:
       title: Typing Indicator Start
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
             type: string
     ClientTypingStop:
       name: typing:stop
       title: Typing Indicator Stop
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
             type: string
-    ClientLeaveRoom:
-      name: room:leave
-      title: Leave Room
+    ClientLeaveConversation:
+      name: conversation:leave
+      title: Leave Conversation
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
             type: string
     ServerReceiveMessage:
       name: message:receive
@@ -171,7 +171,7 @@ components:
           id:
             type: string
             format: uuid
-          roomId:
+          conversationId:
             type: string
           author:
             type: object
@@ -188,12 +188,12 @@ components:
             type: string
             format: date-time
     ServerUserJoined:
-      name: room:user_joined
+      name: conversation:user_joined
       title: User Joined
       payload:
         type: object
         properties:
-          roomId:
+          conversationId:
             type: string
           user:
             type: object
@@ -203,12 +203,12 @@ components:
               username:
                 type: string
     ServerUserLeft:
-      name: room:user_left
+      name: conversation:user_left
       title: User Left
       payload:
         type: object
         properties:
-          roomId:
+          conversationId:
             type: string
           userId:
             type: string
@@ -218,7 +218,7 @@ components:
       payload:
         type: object
         properties:
-          roomId:
+          conversationId:
             type: string
           username:
             type: string

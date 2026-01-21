@@ -2,19 +2,17 @@ import { object, string, array, boolean, z } from "zod";
 import { userIdSchema } from "./user.schema.js";
 import { createPrefixedIdSchema } from "../utils/zod.js";
 
-export const roomIdSchema = createPrefixedIdSchema("room", {
-    invalidError: "Room ID is invalid",
-    requiredError: "Room ID is required",
+export const conversationIdSchema = createPrefixedIdSchema("conv", {
+    invalidError: "Conversation ID is invalid",
+    requiredError: "Conversation ID is required",
 });
 
-export const createRoomSchema = object({
+export const createConversationSchema = object({
     body: object({
-        type: z.enum(["direct", "group"], {
-            error: "Type is required",
-        }),
+        type: z.enum(["direct", "group"]),
         participants: array(userIdSchema).optional().default([]),
         name: string().optional(),
-        isPrivate: boolean(),
+        isPrivate: boolean().optional().default(true),
     }).superRefine((data, ctx) => {
         if (data.type === "group" && !data.name) {
             ctx.addIssue({
@@ -33,14 +31,14 @@ export const createRoomSchema = object({
     }),
 });
 
-export type CreateRoomRequest = z.infer<typeof createRoomSchema>;
+export type CreateConversationRequest = z.infer<typeof createConversationSchema>;
 
 export const addMemberSchema = object({
     body: object({
         userId: userIdSchema,
     }),
     params: object({
-        roomId: roomIdSchema,
+        conversationId: conversationIdSchema,
     }),
 });
 
@@ -48,24 +46,24 @@ export type AddMemberRequest = z.infer<typeof addMemberSchema>;
 
 export const removeMemberSchema = object({
     params: object({
-        roomId: roomIdSchema,
+        conversationId: conversationIdSchema,
         userId: userIdSchema,
     }),
 });
 
 export type RemoveMemberRequest = z.infer<typeof removeMemberSchema>;
 
-export const leaveRoomSchema = object({
+export const leaveConversationSchema = object({
     params: object({
-        roomId: roomIdSchema,
+        conversationId: conversationIdSchema,
     }),
 });
 
-export type LeaveRoomRequest = z.infer<typeof leaveRoomSchema>;
+export type LeaveConversationRequest = z.infer<typeof leaveConversationSchema>;
 
 export const getMessagesSchema = object({
     params: object({
-        roomId: roomIdSchema,
+        conversationId: conversationIdSchema,
     }),
     query: object({
         limit: string().optional(),

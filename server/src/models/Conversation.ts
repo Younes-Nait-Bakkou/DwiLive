@@ -3,7 +3,7 @@ import type { PopulatedDoc } from "mongoose";
 import type { IUser } from "./User.js";
 import type { IMessage } from "./Message.js";
 
-export interface IRoom extends Document {
+export interface IConversation extends Document {
     id: string;
     type: "direct" | "group";
     name?: string;
@@ -17,7 +17,7 @@ export interface IRoom extends Document {
     isUserParticipant(userId: mongoose.Types.ObjectId | string): boolean;
 }
 
-const roomSchema = new Schema<IRoom>(
+const conversationSchema = new Schema<IConversation>(
     {
         type: {
             type: String,
@@ -41,7 +41,7 @@ const roomSchema = new Schema<IRoom>(
         admin: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: function (this: IRoom) {
+            required: function (this: IConversation) {
                 return this.type === "group";
             },
         },
@@ -56,22 +56,22 @@ const roomSchema = new Schema<IRoom>(
         toJSON: {
             virtuals: true,
             transform(_doc, ret) {
-                const { _id, ...room } = ret;
-                room.id = `room_${_id}`;
+                const { _id, ...conversation } = ret;
+                conversation.id = `conv_${_id}`;
 
-                return room;
+                return conversation;
             },
         },
     },
 );
 
-roomSchema.methods.isAdmin = function (user?: IUser): boolean {
+conversationSchema.methods.isAdmin = function (user?: IUser): boolean {
     return (
         !!user && this.admin && this.admin.toString() === user._id.toString()
     );
 };
 
-roomSchema.methods.isUserParticipant = function (
+conversationSchema.methods.isUserParticipant = function (
     userId: mongoose.Types.ObjectId | string,
 ): boolean {
     return this.participants.some(
@@ -80,4 +80,4 @@ roomSchema.methods.isUserParticipant = function (
     );
 };
 
-export default mongoose.model<IRoom>("Room", roomSchema);
+export default mongoose.model<IConversation>("Conversation", conversationSchema);

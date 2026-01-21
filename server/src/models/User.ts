@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 import { hashPassword } from "../utils/password.js";
-import Room from "./Room.js";
+import Conversation from "./Conversation.js";
 
 export interface IUser extends Document {
     id: string;
@@ -10,7 +10,7 @@ export interface IUser extends Document {
     displayName?: string;
     avatarUrl?: string;
     comparePassword(password: string): Promise<boolean>;
-    isInRoom(roomId: string): Promise<boolean>;
+    isInConversation(conversationId: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<IUser>(
@@ -71,14 +71,14 @@ userSchema.methods.comparePassword = async function (
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.methods.isInRoom = async function (
-    roomId: string,
+userSchema.methods.isInConversation = async function (
+    conversationId: string,
 ): Promise<boolean> {
-    const room = await Room.findById(roomId);
-    if (!room) {
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
         return false;
     }
-    return room.isUserParticipant(this._id);
+    return conversation.isUserParticipant(this._id);
 };
 
 export default mongoose.model<IUser>("User", userSchema);

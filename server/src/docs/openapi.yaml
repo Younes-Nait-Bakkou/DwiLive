@@ -2,8 +2,8 @@ openapi: 3.0.0
 info:
   title: DwiLive REST API
   description: |
-    API for managing users, chat rooms, and memberships for the DwiLive application.
-    This API handles the persistence layer (finding users, creating rooms) while Socket.io handles real-time messaging.
+    API for managing users, conversations, and memberships for the DwiLive application.
+    This API handles the persistence layer (finding users, creating conversations) while Socket.io handles real-time messaging.
   version: 1.0.1
 servers:
   - url: http://localhost:3001/api/v1
@@ -32,13 +32,13 @@ components:
         avatarUrl:
           type: string
           example: https://dwi.live/avatars/1.png
-    Room:
+    Conversation:
       type: object
       properties:
         id:
           type: string
           format: uuid
-          example: room_987654321
+          example: conv_987654321
         type:
           type: string
           enum: [direct, group]
@@ -51,7 +51,7 @@ components:
         isPrivate:
           type: boolean
           default: true
-          description: If false, the room might be searchable in a public directory.
+          description: If false, the conversation might be searchable in a public directory.
         participants:
           type: array
           items:
@@ -63,7 +63,7 @@ components:
           format: date-time
     MessageSnippet:
       type: object
-      description: A preview of the last message sent in a room
+      description: A preview of the last message sent in a conversation
       properties:
         content:
           type: string
@@ -78,7 +78,7 @@ components:
         id:
           type: string
           format: uuid
-        roomId:
+        conversationId:
           type: string
           format: uuid
         author:
@@ -121,7 +121,7 @@ components:
           type: string
         avatarUrl:
           type: string
-    CreateRoomRequest:
+    CreateConversationRequest:
       type: object
       required: [type]
       properties:
@@ -147,11 +147,11 @@ components:
         userId:
           type: string
           description: The ID of the user to add to the group
-    LeaveRoomRequest:
+    LeaveConversationRequest:
       type: object
-      required: [roomId]
+      required: [conversationId]
       properties:
-        roomId:
+        conversationId:
           type: string
           description: The ID of the user to add to the group
 
@@ -283,14 +283,14 @@ paths:
                   $ref: '#/components/schemas/User'
 
   # ----------------------------
-  # 2. CHAT ROOMS
+  # 2. CHAT CONVERSATIONS
   # ----------------------------
-  /rooms:
+  /conversations:
     get:
-      summary: List my rooms
-      description: Returns all direct and group chat rooms the authenticated user
+      summary: List my conversations
+      description: Returns all direct and group chat conversations the authenticated user
         has joined.
-      tags: [Rooms]
+      tags: [Conversations]
       responses:
         '200':
           description: Successful retrieval
@@ -299,7 +299,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Room'
+                  $ref: '#/components/schemas/Conversation'
         '401':
           description: Unauthorized
           content:
@@ -307,42 +307,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     post:
-      summary: Create a new room
+      summary: Create a new conversation
       description: >
-        Creates a new chat room. If type is 'direct' and a room already exists, it
-        returns the existing room.
-        If type is 'group', it creates a new room with the specified name and privacy.
-      tags: [Rooms]
+        Creates a new chat conversation. If type is 'direct' and a conversation already exists, it
+        returns the existing conversation.
+        If type is 'group', it creates a new conversation with the specified name and privacy.
+      tags: [Conversations]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRoomRequest'
+              $ref: '#/components/schemas/CreateConversationRequest'
       responses:
         '201':
-          description: Room created successfully
+          description: Conversation created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Room'
+                $ref: '#/components/schemas/Conversation'
         '200':
-          description: Existing direct room returned
+          description: Existing direct conversation returned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Room'
-  /rooms/{roomId}/members:
+                $ref: '#/components/schemas/Conversation'
+  /conversations/{conversationId}/members:
     post:
       summary: Add a member to a group
-      tags: [Rooms]
+      tags: [Conversations]
       parameters:
         - in: path
-          name: roomId
+          name: conversationId
           schema:
             type: string
           required: true
-          description: The ID of the group room
+          description: The ID of the group conversation
       requestBody:
         required: true
         content:
@@ -353,7 +353,7 @@ paths:
         '200':
           description: User added successfully
         '400':
-          description: Room is not a group or User already in room
+          description: Conversation is not a group or User already in conversation
           content:
             application/json:
               schema:
@@ -364,22 +364,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /rooms/{roomId}/leave:
+  /conversations/{conversationId}/leave:
     post:
-      summary: Leave a group room
+      summary: Leave a group conversation
       description: >
-        Allows an authenticated user to leave a group room. If the user is the last member or the admin, the room may be deleted.
-      tags: [Rooms]
+        Allows an authenticated user to leave a group conversation. If the user is the last member or the admin, the conversation may be deleted.
+      tags: [Conversations]
       parameters:
         - in: path
-          name: roomId
+          name: conversationId
           schema:
             type: string
           required: true
-          description: The ID of the group room to leave
+          description: The ID of the group conversation to leave
       responses:
         '200':
-          description: Successfully left the room
+          description: Successfully left the conversation
           content:
             application/json:
               schema:
@@ -391,26 +391,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden, e.g., not a member of the room
+          description: Forbidden, e.g., not a member of the conversation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Room not found
+          description: Conversation not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /rooms/{roomId}/members/{userId}:
+  /conversations/{conversationId}/members/{userId}:
     delete:
       summary: Remove a member or leave group
       description: Remove a user from the group. If userId matches the authenticated
         user, they leave the group.
-      tags: [Rooms]
+      tags: [Conversations]
       parameters:
         - in: path
-          name: roomId
+          name: conversationId
           schema:
             type: string
           required: true
@@ -424,13 +424,13 @@ paths:
           description: Member removed successfully
         '403':
           description: Not authorized to remove this member
-  /rooms/{roomId}/messages:
+  /conversations/{conversationId}/messages:
     get:
-      summary: Get room message history
-      tags: [Rooms]
+      summary: Get conversation message history
+      tags: [Conversations]
       parameters:
         - in: path
-          name: roomId
+          name: conversationId
           required: true
           schema:
             type: string

@@ -1,8 +1,7 @@
----
 asyncapi: 3.0.0
 info:
   title: DwiLive Real-Time API
-  version: 1.0.0
+  version: 1.0.1
   description: |
     The WebSocket contract for DwiLive (v3.0.0).
     Handles real-time events that occur AFTER a user has fetched their room list via REST.
@@ -22,8 +21,10 @@ channels:
         $ref: '#/components/messages/ClientJoinRoom'
       clientSendMessage:
         $ref: '#/components/messages/ClientSendMessage'
-      clientTyping:
-        $ref: '#/components/messages/ClientTyping'
+      clientTypingStart:
+        $ref: '#/components/messages/ClientTypingStart'
+      clientTypingStop:
+        $ref: '#/components/messages/ClientTypingStop'
       clientLeaveRoom:
         $ref: '#/components/messages/ClientLeaveRoom'
       serverReceiveMessage:
@@ -56,9 +57,16 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Client indicates typing status
+    summary: Client indicates typing status has started
     messages:
-      - $ref: '#/channels/rootChannel/messages/clientTyping'
+      - $ref: '#/channels/rootChannel/messages/clientTypingStart'
+  onTypingStop:
+    action: receive
+    channel:
+      $ref: '#/channels/rootChannel'
+    summary: Client indicates typing status has stopped
+    messages:
+      - $ref: '#/channels/rootChannel/messages/clientTypingStop'
   onLeaveRoom:
     action: receive
     channel:
@@ -102,7 +110,7 @@ components:
   messages:
     # --- MESSAGE COMPONENT DEFINITIONS ---
     ClientJoinRoom:
-      name: join_room
+      name: room:join
       title: Join Room
       payload:
         type: object
@@ -112,7 +120,7 @@ components:
             type: string
             format: uuid
     ClientSendMessage:
-      name: send_message
+      name: message:send
       title: Send Message
       payload:
         type: object
@@ -127,9 +135,18 @@ components:
             type: string
             enum: [text, image]
             default: text
-    ClientTyping:
-      name: typing_start
-      title: Typing Indicator
+    ClientTypingStart:
+      name: typing:start
+      title: Typing Indicator Start
+      payload:
+        type: object
+        required: [roomId]
+        properties:
+          roomId:
+            type: string
+    ClientTypingStop:
+      name: typing:stop
+      title: Typing Indicator Stop
       payload:
         type: object
         required: [roomId]
@@ -137,7 +154,7 @@ components:
           roomId:
             type: string
     ClientLeaveRoom:
-      name: leave_room
+      name: room:leave
       title: Leave Room
       payload:
         type: object
@@ -146,7 +163,7 @@ components:
           roomId:
             type: string
     ServerReceiveMessage:
-      name: receive_message
+      name: message:receive
       title: Incoming Message
       payload:
         type: object
@@ -171,7 +188,7 @@ components:
             type: string
             format: date-time
     ServerUserJoined:
-      name: user_joined
+      name: room:user_joined
       title: User Joined
       payload:
         type: object
@@ -186,7 +203,7 @@ components:
               username:
                 type: string
     ServerUserLeft:
-      name: user_left
+      name: room:user_left
       title: User Left
       payload:
         type: object
@@ -196,7 +213,7 @@ components:
           userId:
             type: string
     ServerTypingIndicator:
-      name: display_typing
+      name: typing:display
       title: Display Typing
       payload:
         type: object
@@ -207,3 +224,28 @@ components:
             type: string
           isTyping:
             type: boolean
+  schemas:
+    SocketResponse:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/SocketResponseSuccess'
+        - $ref: '#/components/schemas/SocketResponseError'
+    SocketResponseSuccess:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [OK]
+        data:
+          type: object
+    SocketResponseError:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ERROR]
+        error:
+          type: string
+        code:
+          type: string
+          enum: [UNAUTHORIZED, VALIDATION_ERROR, INTERNAL_SERVER_ERROR]

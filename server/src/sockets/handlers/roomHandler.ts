@@ -4,6 +4,8 @@ import type { IUser } from "../../models/User.js";
 import type { Server, Socket } from "socket.io";
 import { SocketEvent } from "../../config/events.js";
 import { isPopulated } from "../../utils/typeGuards.js";
+import { ErrorCodes } from "../../types/socket.response.d.js";
+import type { SocketResponse } from "../../types/socket.response.d.js";
 
 export const registerRoomHandlers = (io: Server, socket: Socket) => {
     const joinRoom = async ({ roomId }: { roomId: string }) => {
@@ -28,49 +30,99 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         });
     };
 
-    const sendMessage = async ({
-        roomId,
-        content,
-        type,
-    }: {
-        roomId: string;
-        content: string;
-        type: "text" | "image";
-    }) => {
-        const message = await Message.create({
-            room: roomId,
+    const sendMessage = async (
+        {
+            roomId,
             content,
             type,
-            sender: socket.user._id,
-        });
+        }: {
+            roomId: string;
+            content: string;
+            type: "text" | "image";
+        },
+        callback: (response: SocketResponse) => void,
+    ) => {
+        try {
+            if (!content) {
+                console.warn(
+                    `User ${socket.user.id} sent empty message to room ${roomId}.`,
+                );
+                return callback({
+                    status: "ERROR",
+                    error: "Message content cannot be empty",
+                    code: ErrorCodes.VALIDATION_ERROR,
+                });
+            }
 
-        const populatedMessage = await message.populate(["sender", "room"]);
+            const isMember = await socket.user.isInRoom(roomId);
+            if (!isMember) {
+                console.warn(
+                    `User ${socket.user.id} unauthorized for room ${roomId}`,
+                );
+                return callback({
+                    status: "ERROR",
+                    error: "You are not a participant of this conversation",
+                    code: ErrorCodes.UNAUTHORIZED,
+                });
+            }
 
-        const sender = populatedMessage.sender;
-        const room = populatedMessage.room;
+            const message = await Message.create({
+                room: roomId,
+                content,
+                type,
+                sender: socket.user._id,
+            });
 
-        if (!isPopulated<IUser>(sender))
-            throw new Error(
-                "Internal Server Error: Message sender not populated",
-            );
+            const populatedMessage = await message.populate(["sender", "room"]);
 
-        if (!isPopulated<IRoom>(room))
-            throw new Error(
-                "Internal Server Error: Message room not populated",
-            );
+            const sender = populatedMessage.sender;
+            const room = populatedMessage.room;
 
-        const payload = {
-            id: room.id,
-            author: {
-                id: sender?.id,
-                username: sender?.username,
-                avatarUrl: sender?.avatarUrl,
-            },
-            content: populatedMessage.content,
-            createdAt: populatedMessage.createdAt,
-        };
+            if (!isPopulated<IUser>(sender)) {
+                console.error(
+                    "Internal Server Error: Message sender not populated for message:",
+                    message._id,
+                );
+                return callback({
+                    status: "ERROR",
+                    error: "Internal Server Error. Please try again later.",
+                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                });
+            }
 
-        io.to(roomId).emit(SocketEvent.RECEIVE_MESSAGE, payload);
+            if (!isPopulated<IRoom>(room)) {
+                console.error(
+                    "Internal Server Error: Message room not populated for message:",
+                    message._id,
+                );
+                return callback({
+                    status: "ERROR",
+                    error: "Internal Server Error. Please try again later.",
+                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                });
+            }
+
+            const payload = {
+                id: room.id,
+                author: {
+                    id: sender?.id,
+                    username: sender?.username,
+                    avatarUrl: sender?.avatarUrl,
+                },
+                content: populatedMessage.content,
+                createdAt: populatedMessage.createdAt,
+            };
+
+            io.to(roomId).emit(SocketEvent.RECEIVE_MESSAGE, payload);
+            callback({ status: "OK", data: payload });
+        } catch (err) {
+            console.error("CRITICAL SOCKET ERROR in sendMessage:", err);
+            callback({
+                status: "ERROR",
+                error: "Internal Server Error. Please try again later.",
+                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+            });
+        }
     };
 
     const startTyping = ({ roomId }: { roomId: string }) => {

@@ -1,11 +1,10 @@
----
 openapi: 3.0.0
 info:
   title: DwiLive REST API
   description: |
     API for managing users, chat rooms, and memberships for the DwiLive application.
     This API handles the persistence layer (finding users, creating rooms) while Socket.io handles real-time messaging.
-  version: 1.0.0
+  version: 1.0.1
 servers:
   - url: http://localhost:3001/api/v1
     description: Local Development Server
@@ -86,6 +85,10 @@ components:
           $ref: '#/components/schemas/User'
         content:
           type: string
+        type:
+          type: string
+          enum: [text, image]
+          default: text
         createdAt:
           type: string
           format: date-time
@@ -144,8 +147,27 @@ components:
         userId:
           type: string
           description: The ID of the user to add to the group
+    LeaveRoomRequest:
+      type: object
+      required: [roomId]
+      properties:
+        roomId:
+          type: string
+          description: The ID of the user to add to the group
 
     # --- RESPONSES ---
+    ApiResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A descriptive message for the response
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "A descriptive message for the error"
     AuthResponse:
       type: object
       properties:
@@ -179,6 +201,10 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
           description: Username already exists or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /auth/login:
     post:
       summary: Login
@@ -199,6 +225,10 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ----------------------------
   # 1. USERS
@@ -272,6 +302,10 @@ paths:
                   $ref: '#/components/schemas/Room'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Create a new room
       description: >
@@ -320,8 +354,54 @@ paths:
           description: User added successfully
         '400':
           description: Room is not a group or User already in room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Not authorized to add members (Admin only)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /rooms/{roomId}/leave:
+    post:
+      summary: Leave a group room
+      description: >
+        Allows an authenticated user to leave a group room. If the user is the last member or the admin, the room may be deleted.
+      tags: [Rooms]
+      parameters:
+        - in: path
+          name: roomId
+          schema:
+            type: string
+          required: true
+          description: The ID of the group room to leave
+      responses:
+        '200':
+          description: Successfully left the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request, e.g., trying to leave a direct message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden, e.g., not a member of the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rooms/{roomId}/members/{userId}:
     delete:
       summary: Remove a member or leave group
@@ -373,4 +453,3 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Message'
-

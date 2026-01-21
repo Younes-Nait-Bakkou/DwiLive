@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
+import { hashPassword } from "../utils/password.js";
+import Room from "./Room.js";
 
 export interface IUser extends Document {
     id: string;
@@ -8,6 +10,7 @@ export interface IUser extends Document {
     displayName?: string;
     avatarUrl?: string;
     comparePassword(password: string): Promise<boolean>;
+    isInRoom(roomId: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<IUser>(
@@ -50,8 +53,6 @@ const userSchema = new Schema<IUser>(
     },
 );
 
-import { hashPassword } from "../utils/password.js";
-
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
 
@@ -68,6 +69,16 @@ userSchema.methods.comparePassword = async function (
     }
 
     return bcrypt.compare(candidatePassword, this.password);
+};
+
+userSchema.methods.isInRoom = async function (
+    roomId: string,
+): Promise<boolean> {
+    const room = await Room.findById(roomId);
+    if (!room) {
+        return false;
+    }
+    return room.isUserParticipant(this._id);
 };
 
 export default mongoose.model<IUser>("User", userSchema);

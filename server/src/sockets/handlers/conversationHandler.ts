@@ -6,28 +6,78 @@ import { SocketEvent } from "../../config/events.js";
 import { isPopulated } from "../../utils/typeGuards.js";
 import { ErrorCodes } from "../../types/socket.response.d.js";
 import type { SocketResponse } from "../../types/socket.response.d.js";
+import { validateSocket } from "../../middlewares/socket.validator.js";
+import {
+    joinConversationSchema,
+    leaveConversationSchema,
+    sendMessageSchema,
+    startTypingSchema,
+    stopTypingSchema,
+} from "../../schemas/socket.schema.js";
 
 export const registerConversationHandlers = (io: Server, socket: Socket) => {
-    const joinConversation = async ({ conversationId }: { conversationId: string }) => {
-        socket.join(conversationId);
+    const joinConversation = async (
+        { conversationId }: { conversationId: string },
+        callback: (response: SocketResponse) => void,
+    ) => {
+        try {
+            const isMember = await socket.user.isInConversation(conversationId);
+            if (!isMember) {
+                return callback({
+                    status: "ERROR",
+                    error: "You are not a participant of this conversation",
+                    code: ErrorCodes.UNAUTHORIZED,
+                });
+            }
+            socket.join(conversationId);
 
-        console.log(`User joined conversation: ${conversationId}`);
-        socket.to(conversationId).emit(SocketEvent.USER_JOINED_CONVERSATION, {
-            conversationId,
-            user: {
-                id: socket.user.id,
-                username: socket.user.username,
-            },
-        });
+            console.log(`User joined conversation: ${conversationId}`);
+            socket.to(conversationId).emit(SocketEvent.USER_JOINED_CONVERSATION, {
+                conversationId,
+                user: {
+                    id: socket.user.id,
+                    username: socket.user.username,
+                },
+            });
+            callback({ status: "OK", data: null });
+        } catch (err) {
+            console.error("CRITICAL SOCKET ERROR in joinConversation:", err);
+            callback({
+                status: "ERROR",
+                error: "Internal Server Error. Please try again later.",
+                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+            });
+        }
     };
 
-    const leaveConversation = async ({ conversationId }: { conversationId: string }) => {
-        socket.leave(conversationId);
-        console.log(`User left conversation: ${conversationId}`);
-        socket.to(conversationId).emit(SocketEvent.USER_LEFT_CONVERSATION, {
-            conversationId,
-            userId: socket.user.id,
-        });
+    const leaveConversation = async (
+        { conversationId }: { conversationId: string },
+        callback: (response: SocketResponse) => void,
+    ) => {
+        try {
+            const isMember = await socket.user.isInConversation(conversationId);
+            if (!isMember) {
+                return callback({
+                    status: "ERROR",
+                    error: "You are not a participant of this conversation",
+                    code: ErrorCodes.UNAUTHORIZED,
+                });
+            }
+            socket.leave(conversationId);
+            console.log(`User left conversation: ${conversationId}`);
+            socket.to(conversationId).emit(SocketEvent.USER_LEFT_CONVERSATION, {
+                conversationId,
+                userId: socket.user.id,
+            });
+            callback({ status: "OK", data: null });
+        } catch (err) {
+            console.error("CRITICAL SOCKET ERROR in leaveConversation:", err);
+            callback({
+                status: "ERROR",
+                error: "Internal Server Error. Please try again later.",
+                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+            });
+        }
     };
 
     const sendMessage = async (
@@ -43,22 +93,8 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
         callback: (response: SocketResponse) => void,
     ) => {
         try {
-            if (!content) {
-                console.warn(
-                    `User ${socket.user.id} sent empty message to conversation ${conversationId}.`,
-                );
-                return callback({
-                    status: "ERROR",
-                    error: "Message content cannot be empty",
-                    code: ErrorCodes.VALIDATION_ERROR,
-                });
-            }
-
             const isMember = await socket.user.isInConversation(conversationId);
             if (!isMember) {
-                console.warn(
-                    `User ${socket.user.id} unauthorized for conversation ${conversationId}`,
-                );
                 return callback({
                     status: "ERROR",
                     error: "You are not a participant of this conversation",
@@ -125,25 +161,73 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
         }
     };
 
-    const startTyping = ({ conversationId }: { conversationId: string }) => {
-        socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
-            conversationId,
-            username: socket.user.username,
-            isTyping: true,
-        });
+    const startTyping = async (
+        { conversationId }: { conversationId: string },
+        callback: (response: SocketResponse) => void,
+    ) => {
+        try {
+            const isMember = await socket.user.isInConversation(conversationId);
+            if (!isMember) {
+                return callback({
+                    status: "ERROR",
+                    error: "You are not a participant of this conversation",
+                    code: ErrorCodes.UNAUTHORIZED,
+                });
+            }
+            socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
+                conversationId,
+                username: socket.user.username,
+                isTyping: true,
+            });
+            callback({ status: "OK", data: null });
+        } catch (err) {
+            console.error("CRITICAL SOCKET ERROR in startTyping:", err);
+            callback({
+                status: "ERROR",
+                error: "Internal Server Error. Please try again later.",
+                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+            });
+        }
     };
 
-    const stopTyping = ({ conversationId }: { conversationId: string }) => {
-        socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
-            conversationId,
-            username: socket.user.username,
-            isTyping: false,
-        });
+    const stopTyping = async (
+        { conversationId }: { conversationId: string },
+        callback: (response: SocketResponse) => void,
+    ) => {
+        try {
+            const isMember = await socket.user.isInConversation(conversationId);
+            if (!isMember) {
+                return callback({
+                    status: "ERROR",
+                    error: "You are not a participant of this conversation",
+                    code: ErrorCodes.UNAUTHORIZED,
+                });
+            }
+            socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
+                conversationId,
+                username: socket.user.username,
+                isTyping: false,
+            });
+            callback({ status: "OK", data: null });
+        } catch (err) {
+            console.error("CRITICAL SOCKET ERROR in stopTyping:", err);
+            callback({
+                status: "ERROR",
+                error: "Internal Server Error. Please try again later.",
+                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+            });
+        }
     };
 
-    socket.on(SocketEvent.JOIN_CONVERSATION, joinConversation);
-    socket.on(SocketEvent.LEAVE_CONVERSATION, leaveConversation);
-    socket.on(SocketEvent.SEND_MESSAGE, sendMessage);
-    socket.on(SocketEvent.TYPING_START, startTyping);
-    socket.on(SocketEvent.TYPING_STOP, stopTyping);
+    socket.on(
+        SocketEvent.JOIN_CONVERSATION,
+        validateSocket(joinConversationSchema, joinConversation),
+    );
+    socket.on(
+        SocketEvent.LEAVE_CONVERSATION,
+        validateSocket(leaveConversationSchema, leaveConversation),
+    );
+    socket.on(SocketEvent.SEND_MESSAGE, validateSocket(sendMessageSchema, sendMessage));
+    socket.on(SocketEvent.TYPING_START, validateSocket(startTypingSchema, startTyping));
+    socket.on(SocketEvent.TYPING_STOP, validateSocket(stopTypingSchema, stopTyping));
 };

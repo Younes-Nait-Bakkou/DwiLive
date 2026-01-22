@@ -1,23 +1,30 @@
-import User from "../models/User.js";
+import type { AnyBulkWriteOperation } from "mongoose";
+import User, { type IUser } from "../models/User.js";
 import { hashPassword } from "../utils/password.js";
 
 export interface SeedUsersArgs {
     clearUsers: boolean;
 }
+export const usersToSeed = [
+    {
+        username: "user_1",
+        displayName: "User 1",
+        password: "password123",
+    },
+    {
+        username: "user_2",
+        displayName: "User 2",
+        password: "password123",
+    },
+];
 
 export async function seedUsers({ clearUsers }: SeedUsersArgs) {
-    const users = [
-        {
-            username: "user_1",
-            displayName: "User 1",
-            password: await hashPassword("password123"),
-        },
-        {
-            username: "user_2",
-            displayName: "User 2",
-            password: await hashPassword("password123"),
-        },
-    ];
+    const users = await Promise.all(
+        usersToSeed.map(async (user) => ({
+            ...user,
+            password: await hashPassword(user.password),
+        })),
+    );
     const userNames = users.map((u) => u.username);
 
     if (clearUsers) {
@@ -32,7 +39,7 @@ export async function seedUsers({ clearUsers }: SeedUsersArgs) {
         .lean();
     const existingUsernames = existingUsers.map((u) => u.username);
 
-    const operations = users.map((user) => ({
+    const operations: AnyBulkWriteOperation<IUser>[] = users.map((user) => ({
         updateOne: {
             filter: { username: user.username },
             update: { $set: user },

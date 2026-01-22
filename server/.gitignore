@@ -30,3 +30,7 @@ lerna-debug.log*
 .parcel-cache
 .env
 tmp/
+
+# Postman generated files
+src/postman/collections/
+src/types/postman-collection.d.ts

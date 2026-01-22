@@ -12,7 +12,7 @@ import {
 import { addJwtAuthToCollection } from "./modifiers/add-jwt-auth.js";
 import { patchLoginRequest } from "./modifiers/patch-login.js";
 
-const { Collection, Variable } = postman;
+const { Collection, Variable, Event, Script } = postman;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,6 +72,44 @@ async function generate() {
                 conversionResult.output[0]!.data!,
             );
             collection.name = "DwiLive REST API";
+
+            // Add pre-request script to the collection
+            collection.events.add(
+                new Event({
+                    listen: "prerequest",
+                    script: new Script({
+                        exec: [
+                            "function parseDurationToMilliseconds(duration) {",
+                            "    // Base case: if it's already a number, assume it is milliseconds",
+                            "    if (typeof duration === 'number') return duration;",
+                            "    ",
+                            "    var unit = duration.slice(-1);",
+                            "    var value = parseFloat(duration.slice(0, -1));",
+                            "",
+                            "    switch (unit) {",
+                            "        case 'd': // Days -> convert to Hours",
+                            "            return parseDurationToMilliseconds((value * 24) + 'h');",
+                            "        case 'h': // Hours -> convert to Minutes",
+                            "            return parseDurationToMilliseconds((value * 60) + 'm');",
+                            "        case 'm': // Minutes -> convert to Seconds",
+                            "            return parseDurationToMilliseconds((value * 60) + 's');",
+                            "        case 's': // Seconds -> convert to Milliseconds (Your Request)",
+                            "            return value * 1000; ",
+                            "        default: ",
+                            "            // Fallback for plain strings (e.g. \"500\") -> assume ms",
+                            "            return parseFloat(duration) || 0;",
+                            "    }",
+                            "}",
+                            "var expiresIn = pm.globals.get(\"jwt_expires_in\")",
+                            "var durationMs = parseDurationToMilliseconds(expiresIn);",
+                            "var expTimeSeconds = Math.floor((Date.now() + durationMs)/1000);",
+                            "console.log(expTimeSeconds)",
+                            "pm.variables.set('jwt_expiry', expTimeSeconds);",
+                        ],
+                        type: "text/javascript",
+                    }),
+                }),
+            );
 
             // Apply modifiers
             addJwtAuthToCollection(collection);

@@ -20,6 +20,12 @@ export function createGlobalEnvironment() {
                 type: "secret",
                 enabled: true,
             },
+            {
+                key: "jwt_expires_in",
+                value: config.jwt.expiresIn,
+                type: "default",
+                enabled: true,
+            },
         ],
         _postman_variable_scope: "globals",
     };

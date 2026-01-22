@@ -11,13 +11,17 @@ export function addJwtAuthToCollection(collection: postman.Collection) {
         jwt: [
             {
                 key: "isSecretBase64Encoded",
-                value: "true",
+                value: "false",
                 type: "boolean",
             },
             { key: "algorithm", value: "HS256", type: "string" },
             { key: "addTokenTo", value: "header", type: "string" },
             { key: "alg", value: "HS256", type: "string" },
-            { key: "typ", value: "JWT", type: "string" }, // Added JWT Header
+            {
+                key: "header",
+                value: '{\r\n    "typ": "JWT"\r\n}',
+                type: "string",
+            },
             {
                 key: "headerPrefix",
                 value: JWT_HEADER_PREFIX,

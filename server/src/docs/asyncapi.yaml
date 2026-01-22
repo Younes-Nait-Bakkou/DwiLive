@@ -1,11 +1,10 @@
----
 asyncapi: 3.0.0
 info:
   title: DwiLive Real-Time API
-  version: 1.0.0
+  version: 1.0.1
   description: |
     The WebSocket contract for DwiLive (v3.0.0).
-    Handles real-time events that occur AFTER a user has fetched their room list via REST.
+    Handles real-time events that occur AFTER a user has fetched their conversation list via REST.
     **Protocol:** Socket.io                     
     **Auth:** Handshake query `?token=JWT` (or `username` for MVP)
 servers:
@@ -18,14 +17,16 @@ channels:
     address: /
     messages:
       # --- DEFINITIONS IN THE CHANNEL ---
-      clientJoinRoom:
-        $ref: '#/components/messages/ClientJoinRoom'
+      clientJoinConversation:
+        $ref: '#/components/messages/ClientJoinConversation'
       clientSendMessage:
         $ref: '#/components/messages/ClientSendMessage'
-      clientTyping:
-        $ref: '#/components/messages/ClientTyping'
-      clientLeaveRoom:
-        $ref: '#/components/messages/ClientLeaveRoom'
+      clientTypingStart:
+        $ref: '#/components/messages/ClientTypingStart'
+      clientTypingStop:
+        $ref: '#/components/messages/ClientTypingStop'
+      clientLeaveConversation:
+        $ref: '#/components/messages/ClientLeaveConversation'
       serverReceiveMessage:
         $ref: '#/components/messages/ServerReceiveMessage'
       serverUserJoined:
@@ -38,13 +39,13 @@ operations:
   # ----------------------------
   # CLIENT -> SERVER (Receiving)
   # ----------------------------
-  onJoinRoom:
+  onJoinConversation:
     action: receive
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Client asks to join a room
+    summary: Client asks to join a conversation
     messages:
-      - $ref: '#/channels/rootChannel/messages/clientJoinRoom'
+      - $ref: '#/channels/rootChannel/messages/clientJoinConversation'
   onSendMessage:
     action: receive
     channel:
@@ -56,16 +57,23 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Client indicates typing status
+    summary: Client indicates typing status has started
     messages:
-      - $ref: '#/channels/rootChannel/messages/clientTyping'
-  onLeaveRoom:
+      - $ref: '#/channels/rootChannel/messages/clientTypingStart'
+  onTypingStop:
     action: receive
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Client explicitly leaves a room
+    summary: Client indicates typing status has stopped
     messages:
-      - $ref: '#/channels/rootChannel/messages/clientLeaveRoom'
+      - $ref: '#/channels/rootChannel/messages/clientTypingStop'
+  onLeaveConversation:
+    action: receive
+    channel:
+      $ref: '#/channels/rootChannel'
+    summary: Client explicitly leaves a conversation
+    messages:
+      - $ref: '#/channels/rootChannel/messages/clientLeaveConversation'
 
   # ----------------------------
   # SERVER -> CLIENT (Sending)
@@ -74,21 +82,21 @@ operations:
     action: send
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Server broadcasts a new message to the room
+    summary: Server broadcasts a new message to the conversation
     messages:
       - $ref: '#/channels/rootChannel/messages/serverReceiveMessage'
   notifyUserJoined:
     action: send
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Server notifies room that someone joined
+    summary: Server notifies conversation that someone joined
     messages:
       - $ref: '#/channels/rootChannel/messages/serverUserJoined'
   notifyUserLeft:
     action: send
     channel:
       $ref: '#/channels/rootChannel'
-    summary: Server notifies room that someone left
+    summary: Server notifies conversation that someone left
     messages:
       - $ref: '#/channels/rootChannel/messages/serverUserLeft'
   broadcastTyping:
@@ -101,24 +109,24 @@ operations:
 components:
   messages:
     # --- MESSAGE COMPONENT DEFINITIONS ---
-    ClientJoinRoom:
-      name: join_room
-      title: Join Room
+    ClientJoinConversation:
+      name: conversation:join
+      title: Join Conversation
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
             type: string
             format: uuid
     ClientSendMessage:
-      name: send_message
+      name: message:send
       title: Send Message
       payload:
         type: object
-        required: [roomId, content]
+        required: [conversationId, content]
         properties:
-          roomId:
+          conversationId:
             type: string
             format: uuid
           content:
@@ -127,26 +135,35 @@ components:
             type: string
             enum: [text, image]
             default: text
-    ClientTyping:
-      name: typing_start
-      title: Typing Indicator
+    ClientTypingStart:
+      name: typing:start
+      title: Typing Indicator Start
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
             type: string
-    ClientLeaveRoom:
-      name: leave_room
-      title: Leave Room
+    ClientTypingStop:
+      name: typing:stop
+      title: Typing Indicator Stop
       payload:
         type: object
-        required: [roomId]
+        required: [conversationId]
         properties:
-          roomId:
+          conversationId:
+            type: string
+    ClientLeaveConversation:
+      name: conversation:leave
+      title: Leave Conversation
+      payload:
+        type: object
+        required: [conversationId]
+        properties:
+          conversationId:
             type: string
     ServerReceiveMessage:
-      name: receive_message
+      name: message:receive
       title: Incoming Message
       payload:
         type: object
@@ -154,7 +171,7 @@ components:
           id:
             type: string
             format: uuid
-          roomId:
+          conversationId:
             type: string
           author:
             type: object
@@ -171,12 +188,12 @@ components:
             type: string
             format: date-time
     ServerUserJoined:
-      name: user_joined
+      name: conversation:user_joined
       title: User Joined
       payload:
         type: object
         properties:
-          roomId:
+          conversationId:
             type: string
           user:
             type: object
@@ -186,24 +203,49 @@ components:
               username:
                 type: string
     ServerUserLeft:
-      name: user_left
+      name: conversation:user_left
       title: User Left
       payload:
         type: object
         properties:
-          roomId:
+          conversationId:
             type: string
           userId:
             type: string
     ServerTypingIndicator:
-      name: display_typing
+      name: typing:display
       title: Display Typing
       payload:
         type: object
         properties:
-          roomId:
+          conversationId:
             type: string
           username:
             type: string
           isTyping:
             type: boolean
+  schemas:
+    SocketResponse:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/SocketResponseSuccess'
+        - $ref: '#/components/schemas/SocketResponseError'
+    SocketResponseSuccess:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [OK]
+        data:
+          type: object
+    SocketResponseError:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ERROR]
+        error:
+          type: string
+        code:
+          type: string
+          enum: [UNAUTHORIZED, VALIDATION_ERROR, INTERNAL_SERVER_ERROR]

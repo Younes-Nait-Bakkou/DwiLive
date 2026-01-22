@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
+import { hashPassword } from "../utils/password.js";
+import Conversation from "./Conversation.js";
 
 export interface IUser extends Document {
     id: string;
@@ -8,6 +10,7 @@ export interface IUser extends Document {
     displayName?: string;
     avatarUrl?: string;
     comparePassword(password: string): Promise<boolean>;
+    isInConversation(conversationId: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<IUser>(
@@ -53,8 +56,7 @@ const userSchema = new Schema<IUser>(
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await hashPassword(this.password);
 });
 
 userSchema.methods.comparePassword = async function (
@@ -67,6 +69,16 @@ userSchema.methods.comparePassword = async function (
     }
 
     return bcrypt.compare(candidatePassword, this.password);
+};
+
+userSchema.methods.isInConversation = async function (
+    conversationId: string,
+): Promise<boolean> {
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+        return false;
+    }
+    return conversation.isUserParticipant(this._id);
 };
 
 export default mongoose.model<IUser>("User", userSchema);

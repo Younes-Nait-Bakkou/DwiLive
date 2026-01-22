@@ -1,20 +1,20 @@
 import type { RequestHandler } from "express";
-import Room, { type IRoom } from "../models/Room.js";
+import Conversation, { type IConversation } from "../models/Conversation.js";
 import Message, { type IMessage } from "../models/Message.js";
 import mongoose, { type QueryFilter } from "mongoose";
 import {
-    type CreateRoomRequest,
+    type CreateConversationRequest,
     type AddMemberRequest,
     type RemoveMemberRequest,
-    type LeaveRoomRequest,
+    type LeaveConversationRequest,
     type GetMessagesRequest,
-} from "../schemas/room.schema.js";
+} from "../schemas/conversation.schema.js";
 import { log } from "node:console";
 
-export const createRoom: RequestHandler<
+export const createConversation: RequestHandler<
     object,
     object,
-    CreateRoomRequest["body"]
+    CreateConversationRequest["body"]
 > = async (req, res) => {
     try {
         const { type, participants, name, isPrivate } = req.body;
@@ -25,32 +25,32 @@ export const createRoom: RequestHandler<
             const otherUserId = new mongoose.Types.ObjectId(participants![0]);
             const myId = req.user._id;
 
-            const roomFilter: QueryFilter<IRoom> = {
+            const conversationFilter: QueryFilter<IConversation> = {
                 type: "direct",
                 participants: { $all: [myId, otherUserId], $size: 2 },
             };
 
-            // Check if direct room already exists
-            let room = await Room.findOne(roomFilter);
+            // Check if direct conversation already exists
+            let conversation = await Conversation.findOne(conversationFilter);
 
-            if (room) {
-                await room.populate("participants admin");
-                return res.status(200).json(room);
+            if (conversation) {
+                await conversation.populate("participants admin");
+                return res.status(200).json(conversation);
             }
 
-            room = await Room.create({
+            conversation = await Conversation.create({
                 type: "direct",
                 participants: [myId, otherUserId],
                 isPrivate: true,
             });
 
-            await room.populate("participants admin");
-            return res.status(201).json(room);
+            await conversation.populate("participants admin");
+            return res.status(201).json(conversation);
         }
 
         if (type === "group") {
             console.log(participants);
-            const room = await Room.create({
+            const conversation = await Conversation.create({
                 type: "group",
                 name: name!,
                 isPrivate: isPrivate || true,
@@ -63,11 +63,11 @@ export const createRoom: RequestHandler<
                 admin: req.user._id,
             });
 
-            await room.populate("participants admin");
-            return res.status(201).json(room);
+            await conversation.populate("participants admin");
+            return res.status(201).json(conversation);
         }
 
-        return res.status(400).json({ message: "Invalid room type" });
+        return res.status(400).json({ message: "Invalid conversation type" });
     } catch (error: unknown) {
         log(error);
         if (error instanceof mongoose.Error.ValidationError) {
@@ -83,18 +83,21 @@ export const createRoom: RequestHandler<
     }
 };
 
-export const getRooms: RequestHandler = async (req, res) => {
+export const getConversations: RequestHandler = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
         console.log(req.user.id);
-        const roomFilter: QueryFilter<IRoom> = {
+        const conversationFilter: QueryFilter<IConversation> = {
             participants: req.user?._id,
         };
-        const rooms = await Room.find(roomFilter)
+        const conversations = await Conversation.find(conversationFilter)
             .populate("participants")
             .populate("lastMessage")
             .sort({ updatedAt: -1 });
 
-        return res.json(rooms);
+        return res.json(conversations);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -115,32 +118,32 @@ export const addMember: RequestHandler<
     AddMemberRequest["body"]
 > = async (req, res) => {
     try {
-        const { roomId } = req.params;
+        const { conversationId } = req.params;
         const { userId } = req.body;
 
-        const room = await Room.findById(roomId);
-        if (!room) {
-            return res.status(404).json({ message: "Room not found" });
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
         }
 
-        if (room.type !== "group") {
+        if (conversation.type !== "group") {
             return res
                 .status(400)
                 .json({ message: "Cannot add members to a direct chat" });
         }
 
-        if (!room.isAdmin(req.user)) {
+        if (!conversation.isAdmin(req.user)) {
             return res
                 .status(403)
                 .json({ message: "Only the admin can add members" });
         }
 
-        if (room.isUserParticipant(userId)) {
-            return res.status(400).json({ message: "User already in room" });
+        if (conversation.isUserParticipant(userId)) {
+            return res.status(400).json({ message: "User already in conversation" });
         }
 
-        room.participants.push(new mongoose.Types.ObjectId(userId));
-        await room.save();
+        conversation.participants.push(new mongoose.Types.ObjectId(userId));
+        await conversation.save();
 
         return res.json({ message: "User added successfully" });
     } catch (error: unknown) {
@@ -161,38 +164,38 @@ export const removeMember: RequestHandler<
     RemoveMemberRequest["params"]
 > = async (req, res) => {
     try {
-        const { roomId, userId } = req.params;
+        const { conversationId, userId } = req.params;
 
-        const room = await Room.findById(roomId);
-        if (!room) {
-            return res.status(404).json({ message: "Room not found" });
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
         }
 
-        if (room.type === "direct") {
+        if (conversation.type === "direct") {
             return res
                 .status(400)
                 .json({ message: "Cannot remove members from a direct chat" });
         }
 
-        if (!room.isAdmin(req.user)) {
+        if (!conversation.isAdmin(req.user)) {
             return res
                 .status(403)
                 .json({ message: "Only the admin can remove members" });
         }
 
-        if (!room.isUserParticipant(userId)) {
+        if (!conversation.isUserParticipant(userId)) {
             return res
                 .status(400)
-                .json({ message: "Member is not a participant of this room" });
+                .json({ message: "Member is not a participant of this conversation" });
         }
 
         if (userId.toString() == req.user?.toString()) {
             return res
                 .status(400)
-                .json({ message: "You cannot kick yourself out of the room" });
+                .json({ message: "You cannot kick yourself out of the conversation" });
         }
 
-        await room.save();
+        await conversation.save();
         return res.json({ message: "Member removed successfully" });
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
@@ -215,23 +218,23 @@ export const getMessages: RequestHandler<
     GetMessagesRequest["query"]
 > = async (req, res) => {
     try {
-        const { roomId } = req.params;
+        const { conversationId } = req.params;
         const { limit = "50", before } = req.query;
 
-        const roomFilter: QueryFilter<IRoom> = {
-            _id: roomId,
+        const conversationFilter: QueryFilter<IConversation> = {
+            _id: conversationId,
             participants: req.user?._id,
         };
 
-        // Verify user is in room
-        const room = await Room.findOne(roomFilter);
-        if (!room) {
+        // Verify user is in conversation
+        const conversation = await Conversation.findOne(conversationFilter);
+        if (!conversation) {
             return res
                 .status(403)
-                .json({ message: "Access denied or room not found" });
+                .json({ message: "Access denied or conversation not found" });
         }
 
-        const query: QueryFilter<IMessage> = { roomId };
+        const query: QueryFilter<IMessage> = { conversationId };
         if (before) {
             query.createdAt = { $lt: new Date(before) };
         }
@@ -243,8 +246,8 @@ export const getMessages: RequestHandler<
 
         const formattedMessages = messages.map((msg) => ({
             id: msg._id,
-            roomId: msg.roomId,
-            author: msg.senderId,
+            conversation: msg.conversation,
+            author: msg.sender,
             content: msg.content,
             createdAt: msg.createdAt,
             type: msg.type,
@@ -265,41 +268,41 @@ export const getMessages: RequestHandler<
     }
 };
 
-export const leaveRoom: RequestHandler<LeaveRoomRequest["params"]> = async (
+export const leaveConversation: RequestHandler<LeaveConversationRequest["params"]> = async (
     req,
     res,
 ) => {
     try {
-        const { roomId } = req.params;
+        const { conversationId } = req.params;
         const userId = req.user!._id;
 
-        const room = await Room.findById(roomId);
-        if (!room) {
-            return res.status(404).json({ message: "Room not found" });
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
         }
 
-        if (!room.isUserParticipant(userId)) {
+        if (!conversation.isUserParticipant(userId)) {
             return res
                 .status(400)
-                .json({ message: "You are not in this room" });
+                .json({ message: "You are not in this conversation" });
         }
 
-        if (room.type === "direct") {
+        if (conversation.type === "direct") {
             return res
                 .status(400)
                 .json({ message: "Cannot leave a direct chat" });
         }
 
         if (
-            room.type === "group" &&
-            room.admin?.toString() === userId?.toString()
+            conversation.type === "group" &&
+            conversation.admin?.toString() === userId?.toString()
         ) {
-            await Room.findByIdAndDelete(roomId);
-            return res.json({ message: "Room deleted as admin left" });
+            await Conversation.findByIdAndDelete(conversationId);
+            return res.json({ message: "Conversation deleted as admin left" });
         }
 
-        await room.save();
-        return res.json({ message: "You have left the room" });
+        await conversation.save();
+        return res.json({ message: "You have left the conversation" });
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });

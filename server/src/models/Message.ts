@@ -1,9 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
+import type { PopulatedDoc } from "mongoose";
+import type { IConversation } from "./Conversation.js";
+import type { IUser } from "./User.js";
 
 export interface IMessage extends Document {
     id: string;
-    roomId: mongoose.Types.ObjectId;
-    senderId: mongoose.Types.ObjectId;
+    conversation: PopulatedDoc<IConversation>;
+    sender: PopulatedDoc<IUser>;
     content: string;
     type: "text" | "image";
     createdAt: Date;
@@ -11,13 +14,13 @@ export interface IMessage extends Document {
 
 const messageSchema = new Schema<IMessage>(
     {
-        roomId: {
+        conversation: {
             type: Schema.Types.ObjectId,
-            ref: "Room",
+            ref: "Conversation",
             required: true,
             index: true,
         },
-        senderId: {
+        sender: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,

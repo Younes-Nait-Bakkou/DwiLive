@@ -31,7 +31,9 @@ export const createConversationSchema = object({
     }),
 });
 
-export type CreateConversationRequest = z.infer<typeof createConversationSchema>;
+export type CreateConversationRequest = z.infer<
+    typeof createConversationSchema
+>;
 
 export const addMemberSchema = object({
     body: object({

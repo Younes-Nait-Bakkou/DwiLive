@@ -32,13 +32,15 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
             socket.join(conversationId);
 
             console.log(`User joined conversation: ${conversationId}`);
-            socket.to(conversationId).emit(SocketEvent.USER_JOINED_CONVERSATION, {
-                conversationId,
-                user: {
-                    id: socket.user.id,
-                    username: socket.user.username,
-                },
-            });
+            socket
+                .to(conversationId)
+                .emit(SocketEvent.USER_JOINED_CONVERSATION, {
+                    conversationId,
+                    user: {
+                        id: socket.user.id,
+                        username: socket.user.username,
+                    },
+                });
             callback({ status: "OK", data: null });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in joinConversation:", err);
@@ -109,7 +111,10 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                 sender: socket.user._id,
             });
 
-            const populatedMessage = await message.populate(["sender", "conversation"]);
+            const populatedMessage = await message.populate([
+                "sender",
+                "conversation",
+            ]);
 
             const sender = populatedMessage.sender;
             const conversation = populatedMessage.conversation;
@@ -227,7 +232,16 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
         SocketEvent.LEAVE_CONVERSATION,
         validateSocket(leaveConversationSchema, leaveConversation),
     );
-    socket.on(SocketEvent.SEND_MESSAGE, validateSocket(sendMessageSchema, sendMessage));
-    socket.on(SocketEvent.TYPING_START, validateSocket(startTypingSchema, startTyping));
-    socket.on(SocketEvent.TYPING_STOP, validateSocket(stopTypingSchema, stopTyping));
+    socket.on(
+        SocketEvent.SEND_MESSAGE,
+        validateSocket(sendMessageSchema, sendMessage),
+    );
+    socket.on(
+        SocketEvent.TYPING_START,
+        validateSocket(startTypingSchema, startTyping),
+    );
+    socket.on(
+        SocketEvent.TYPING_STOP,
+        validateSocket(stopTypingSchema, stopTyping),
+    );
 };

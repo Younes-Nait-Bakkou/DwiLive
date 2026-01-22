@@ -4,7 +4,10 @@ import { ErrorCodes } from "../types/socket.response.d.js";
 
 type EventData = { [key: string]: unknown };
 type EventCallback = (response: SocketResponse) => void;
-type EventHandler<T extends EventData> = (data: T, callback: EventCallback) => void;
+type EventHandler<T extends EventData> = (
+    data: T,
+    callback: EventCallback,
+) => void;
 
 export const validateSocket = <T extends EventData>(
     schema: z.ZodSchema<T>,

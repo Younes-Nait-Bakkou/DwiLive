@@ -32,9 +32,16 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
             socket.join(conversationId);
 
             console.log(`User joined conversation: ${conversationId}`);
+            const message = await Message.create({
+                conversation: conversationId,
+                content,
+                type,
+                sender: socket.user._id,
+            });
+
             socket
                 .to(conversationId)
-                .emit(SocketEvent.USER_JOINED_CONVERSATION, {
+                .emit(SocketEvent.Server.USER_JOINED_CONVERSATION, {
                     conversationId,
                     user: {
                         id: socket.user.id,
@@ -67,10 +74,12 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
             }
             socket.leave(conversationId);
             console.log(`User left conversation: ${conversationId}`);
-            socket.to(conversationId).emit(SocketEvent.USER_LEFT_CONVERSATION, {
-                conversationId,
-                userId: socket.user.id,
-            });
+            socket
+                .to(conversationId)
+                .emit(SocketEvent.Server.USER_LEFT_CONVERSATION, {
+                    conversationId,
+                    userId: socket.user.id,
+                });
             callback({ status: "OK", data: null });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in leaveConversation:", err);
@@ -154,7 +163,10 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                 createdAt: populatedMessage.createdAt,
             };
 
-            io.to(conversationId).emit(SocketEvent.RECEIVE_MESSAGE, payload);
+            io.to(conversationId).emit(
+                SocketEvent.Server.RECEIVE_MESSAGE,
+                payload,
+            );
             callback({ status: "OK", data: payload });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in sendMessage:", err);
@@ -179,7 +191,7 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
-            socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
+            socket.to(conversationId).emit(SocketEvent.Server.DISPLAY_TYPING, {
                 conversationId,
                 username: socket.user.username,
                 isTyping: true,
@@ -208,7 +220,7 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
-            socket.to(conversationId).emit(SocketEvent.DISPLAY_TYPING, {
+            socket.to(conversationId).emit(SocketEvent.Server.DISPLAY_TYPING, {
                 conversationId,
                 username: socket.user.username,
                 isTyping: false,
@@ -225,23 +237,23 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
     };
 
     socket.on(
-        SocketEvent.JOIN_CONVERSATION,
+        SocketEvent.Client.JOIN_CONVERSATION,
         validateSocket(joinConversationSchema, joinConversation),
     );
     socket.on(
-        SocketEvent.LEAVE_CONVERSATION,
+        SocketEvent.Client.LEAVE_CONVERSATION,
         validateSocket(leaveConversationSchema, leaveConversation),
     );
     socket.on(
-        SocketEvent.SEND_MESSAGE,
+        SocketEvent.Client.SEND_MESSAGE,
         validateSocket(sendMessageSchema, sendMessage),
     );
     socket.on(
-        SocketEvent.TYPING_START,
+        SocketEvent.Client.TYPING_START,
         validateSocket(startTypingSchema, startTyping),
     );
     socket.on(
-        SocketEvent.TYPING_STOP,
+        SocketEvent.Client.TYPING_STOP,
         validateSocket(stopTypingSchema, stopTyping),
     );
 };

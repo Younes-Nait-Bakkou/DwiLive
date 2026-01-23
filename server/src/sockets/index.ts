@@ -40,14 +40,14 @@ export const setupSockets = (io: Server) => {
         }
     });
 
-    io.on(SocketEvent.CONNECT, (socket) => {
+    io.on(SocketEvent.System.CONNECT, (socket) => {
         console.log(`User connected: ${socket.user.username}`);
 
         socket.use(jsonParseMiddleware);
 
         registerConversationHandlers(io, socket);
 
-        socket.on(SocketEvent.DISCONNECT, () => {
+        socket.on(SocketEvent.System.DISCONNECT, () => {
             console.log(`User disconnected: ${socket.user.username}`);
         });
     });

@@ -1,9 +1,10 @@
 import type { IUser } from "../models/User.js";
 import type { UserDomain } from "../shared/domains/index.js";
+import { toPublicId } from "../utils/ids.js";
 
 export const toUserDTO = (user: IUser): UserDomain.UserDTO => {
     return {
-        id: user.id,
+        id: toPublicId("user", user.id),
         username: user.username,
         displayName: user.displayName || user.username,
         avatarUrl: user.avatarUrl || null,

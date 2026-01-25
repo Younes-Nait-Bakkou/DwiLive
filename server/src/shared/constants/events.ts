@@ -1,14 +1,13 @@
-import type { SocketEvent } from "../config/events.js";
-import type { EventCallback } from "../middlewares/socket.validator.js";
-import type { SendMessageRequest } from "../schemas/socket.schema.js";
-import type { Message, UserBasic } from "./conversation.types.js";
+import type { SocketEvent } from "../../config/events.js";
+import type { EventCallback } from "../../middlewares/socket.validator.js";
+import type { SendMessageRequest } from "../domains/socket.js";
 
 export interface ServerToClientEvents {
-    [SocketEvent.Server.RECEIVE_MESSAGE]: (message: Message) => void;
+    [SocketEvent.Server.RECEIVE_MESSAGE]: (message: string) => void;
 
     [SocketEvent.Server.USER_JOINED_CONVERSATION]: (data: {
         conversationId: string;
-        user: UserBasic;
+        user: string;
     }) => void;
 
     [SocketEvent.Server.DISPLAY_TYPING]: (data: {

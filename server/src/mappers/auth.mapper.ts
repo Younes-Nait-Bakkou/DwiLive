@@ -1,14 +1,11 @@
 import type { IUser } from "../models/User.js";
 import type { AuthDomain } from "../shared/domains/index.js";
+import { UserMapper } from "./index.js";
 
 const _toAuthDTO = (user: IUser, token: string): AuthDomain.AuthDTO => {
     return {
         token: token,
-        user: {
-            id: user.id,
-            username: user.username,
-            displayName: user.displayName || user.username,
-        },
+        user: UserMapper.toUserDTO(user),
     };
 };
 

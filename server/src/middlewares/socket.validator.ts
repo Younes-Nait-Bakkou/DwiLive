@@ -1,6 +1,5 @@
 import { z } from "zod";
-import type { SocketResponse } from "../types/socket.response.d.js";
-import { ErrorCodes } from "../types/socket.response.d.js";
+import { ErrorCodes, type SocketResponse } from "../types/socket.js";
 
 type EventData = { [key: string]: unknown };
 type EventCallback = (response: SocketResponse) => void;

@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import type { AuthHandler } from "../types/api.types.js";
+import type { AuthHandler } from "../types/api.js";
 
 // helper to ensure that the handler is a RequestHandler
 export const withAuth = <Req, Res, Params, Query>(

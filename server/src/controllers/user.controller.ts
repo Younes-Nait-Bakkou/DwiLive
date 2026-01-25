@@ -2,7 +2,7 @@ import User, { type IUser } from "../models/User.js";
 import mongoose, { type QueryFilter } from "mongoose";
 import { UserDomain } from "../shared/domains/index.js";
 import { UserMapper } from "../mappers/index.js";
-import type { AuthHandler } from "../types/api.types.js";
+import type { AuthHandler } from "../types/api.js";
 
 export const getMe: AuthHandler<void, UserDomain.GetMeResponse> = async (
     req,

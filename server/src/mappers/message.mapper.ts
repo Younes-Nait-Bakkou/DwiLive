@@ -1,14 +1,15 @@
 import type { IMessage } from "../models/Message.js";
 import type { IUser } from "../models/User.js";
 import type { MessageDomain } from "../shared/domains/index.js";
+import { toPublicId } from "../utils/ids.js";
 import { isPopulated } from "../utils/typeGuards.js";
 import { UserMapper } from "./index.js";
 
 export const toMessageDTO = (message: IMessage): MessageDomain.MessageDTO => {
-    const conversationId = message.conversation!.toString();
+    const conversationId = toPublicId("conv", message.conversation!.id);
 
     const base = {
-        id: message.id,
+        id: toPublicId("msg", message.id),
         conversationId: conversationId,
         createdAt: message.createdAt.toISOString(),
     };

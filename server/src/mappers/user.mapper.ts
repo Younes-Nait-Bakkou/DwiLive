@@ -1,7 +1,7 @@
 import type { IUser } from "../models/User.js";
 import type { UserDomain } from "../shared/domains/index.js";
 
-const _toUserDTO = (user: IUser): UserDomain.UserDTO => {
+export const toUserDTO = (user: IUser): UserDomain.UserDTO => {
     return {
         id: user.id,
         username: user.username,
@@ -13,17 +13,17 @@ const _toUserDTO = (user: IUser): UserDomain.UserDTO => {
 };
 
 export const toGetMeResponse = (user: IUser): UserDomain.GetMeResponse => {
-    return _toUserDTO(user);
+    return toUserDTO(user);
 };
 
 export const toUpdateMeResponse = (
     user: IUser,
 ): UserDomain.UpdateMeResponse => {
-    return _toUserDTO(user);
+    return toUserDTO(user);
 };
 
 export const toSearchUsersResponse = (
     users: IUser[],
 ): UserDomain.SearchUsersResponse => {
-    return users.map((u) => _toUserDTO(u));
+    return users.map((u) => toUserDTO(u));
 };

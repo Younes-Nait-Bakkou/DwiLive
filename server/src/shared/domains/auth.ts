@@ -1,4 +1,3 @@
-// shared/domains/auth.ts
 import { z } from "zod";
 
 // --- Types (DTOs) ---
@@ -13,18 +12,22 @@ export interface AuthDTO {
 
 // --- Requests (Zod Schemas) ---
 export const LoginSchema = z.object({
-    username: z.string(),
-    password: z.string(),
+    body: z.object({
+        username: z.string(),
+        password: z.string(),
+    }),
 });
 
 export const RegisterSchema = z.object({
-    username: z.string(),
-    password: z.string(),
-    displayName: z.string().optional(),
+    body: z.object({
+        username: z.string(),
+        password: z.string(),
+        displayName: z.string().optional(),
+    }),
 });
 
-export type LoginRequest = z.infer<typeof LoginSchema>;
-export type RegisterRequest = z.infer<typeof RegisterSchema>;
+export type LoginBody = z.infer<typeof LoginSchema>["body"];
+export type RegisterBody = z.infer<typeof RegisterSchema>["body"];
 
 // --- Responses ---
 export type LoginResponse = AuthDTO;

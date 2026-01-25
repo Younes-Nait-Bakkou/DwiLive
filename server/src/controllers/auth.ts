@@ -21,7 +21,7 @@ const generateToken = (userId: string) => {
 };
 
 export const register: ApiHandler<
-    Auth.RegisterRequest,
+    Auth.RegisterBody,
     Auth.RegisterResponse
 > = async (req, res) => {
     try {
@@ -57,7 +57,7 @@ export const register: ApiHandler<
     }
 };
 
-export const login: ApiHandler<Auth.LoginRequest, Auth.LoginResponse> = async (
+export const login: ApiHandler<Auth.LoginBody, Auth.LoginResponse> = async (
     req,
     res,
 ) => {

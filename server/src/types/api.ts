@@ -37,3 +37,14 @@ export type AuthHandler<
     res: Response<ApiResponse<Res>>,
     next: NextFunction,
 ) => unknown;
+
+import { Server as SocketIOServer } from "socket.io";
+import type {
+    ClientToServerEvents,
+    ServerToClientEvents,
+} from "./socket-interfaces.js";
+
+export type AppServer = SocketIOServer<
+    ClientToServerEvents,
+    ServerToClientEvents
+>;

@@ -22,7 +22,6 @@ export const createConversation: AuthHandler<
                 participants: { $all: [myId, otherUserId], $size: 2 },
             };
 
-            // Check if direct conversation already exists
             let conversation = await Conversation.findOne(conversationFilter);
 
             if (conversation) {

@@ -1,11 +1,11 @@
 import { object, string, z } from "zod";
 import { ConversationIdSchema } from "./conversation.js";
 
-export const joinConversationSchema = object({
+export const joinConversationRoomSchema = object({
     conversationId: ConversationIdSchema,
 });
 
-export const leaveConversationSchema = object({
+export const leaveConversationRoomSchema = object({
     conversationId: ConversationIdSchema,
 });
 
@@ -23,8 +23,12 @@ export const stopTypingSchema = object({
     conversationId: ConversationIdSchema,
 });
 
-export type JoinConversationRequest = z.infer<typeof joinConversationSchema>;
-export type LeaveConversationRequest = z.infer<typeof leaveConversationSchema>;
-export type SendMessageRequest = z.infer<typeof sendMessageSchema>;
-export type StartTypingRequest = z.infer<typeof startTypingSchema>;
-export type StopTypingRequest = z.infer<typeof stopTypingSchema>;
+export type JoinConversationRoomPayload = z.infer<
+    typeof joinConversationRoomSchema
+>;
+export type LeaveConversationRoomPayload = z.infer<
+    typeof leaveConversationRoomSchema
+>;
+export type SendMessagePayload = z.infer<typeof sendMessageSchema>;
+export type StartTypingPayload = z.infer<typeof startTypingSchema>;
+export type StopTypingPayload = z.infer<typeof stopTypingSchema>;

@@ -22,3 +22,9 @@ export const startTypingSchema = object({
 export const stopTypingSchema = object({
     conversationId: conversationIdSchema,
 });
+
+export type JoinConversationRequest = z.infer<typeof joinConversationSchema>;
+export type LeaveConversationRequest = z.infer<typeof leaveConversationSchema>;
+export type SendMessageRequest = z.infer<typeof sendMessageSchema>;
+export type StartTypingRequest = z.infer<typeof startTypingSchema>;
+export type StopTypingRequest = z.infer<typeof stopTypingSchema>;

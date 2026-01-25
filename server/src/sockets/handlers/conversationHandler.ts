@@ -14,8 +14,10 @@ import {
     startTypingSchema,
     stopTypingSchema,
 } from "../../schemas/socket.schema.js";
+import type { AppServer } from "../../shared/types.js";
+import type { Message } from "../../shared/conversation.types.js";
 
-export const registerConversationHandlers = (io: Server, socket: Socket) => {
+export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
     const joinConversation = async (
         { conversationId }: { conversationId: string },
         callback: (response: SocketResponse) => void,
@@ -152,7 +154,7 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                 });
             }
 
-            const payload = {
+            const payload: Message = {
                 id: conversation.id,
                 author: {
                     id: sender?.id,

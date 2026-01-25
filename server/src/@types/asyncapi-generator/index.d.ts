@@ -2,7 +2,7 @@ declare module "@asyncapi/generator" {
     interface GeneratorOptions {
         forceWrite?: boolean;
         install?: boolean;
-        [key: string]: any; // Allow other properties
+        [key: string]: unknown; // Allow other properties
     }
 
     class Generator {

@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 import type { PopulatedDoc } from "mongoose";
 import type { IConversation } from "./Conversation.js";
 import type { IUser } from "./User.js";
+import type { MessageDomain } from "../shared/domains/index.js";
 
 export interface IMessage extends Document {
     id: string;
@@ -9,7 +10,10 @@ export interface IMessage extends Document {
     sender?: PopulatedDoc<IUser>;
     content: string;
     type: "text" | "image" | "system";
-    metadata?: Record<string, unknown>;
+    metadata?:
+        | MessageDomain.UserJoinedMetadata
+        | MessageDomain.GroupRenamedMetadata
+        | MessageDomain.MemberAddedMetadata;
     createdAt: Date;
 }
 

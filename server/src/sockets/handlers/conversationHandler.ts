@@ -1,21 +1,13 @@
 import Message from "../../models/Message.js";
 import type { IConversation } from "../../models/Conversation.js";
 import type { IUser } from "../../models/User.js";
-import type { Server, Socket } from "socket.io";
+import type { Socket } from "socket.io";
 import { SocketEvent } from "../../config/events.js";
 import { isPopulated } from "../../utils/typeGuards.js";
-import { ErrorCodes } from "../../types/socket.response.d.js";
-import type { SocketResponse } from "../../types/socket.response.d.js";
 import { validateSocket } from "../../middlewares/socket.validator.js";
-import {
-    joinConversationSchema,
-    leaveConversationSchema,
-    sendMessageSchema,
-    startTypingSchema,
-    stopTypingSchema,
-} from "../../schemas/socket.schema.js";
-import type { AppServer } from "../../shared/types.js";
-import type { Message } from "../../shared/conversation.types.js";
+import { ErrorCodes, type SocketResponse } from "../../types/socket.js";
+import type { AppServer } from "../../types/server.js";
+import { SystemMessageType } from "../../shared/constants/system-messages.js";
 
 export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
     const joinConversation = async (
@@ -31,14 +23,19 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
+
             socket.join(conversationId);
 
             console.log(`User joined conversation: ${conversationId}`);
+
             const message = await Message.create({
                 conversation: conversationId,
-                content,
-                type,
-                sender: socket.user._id,
+                type: "system",
+                content: SystemMessageType.USER_JOINED,
+                metadata: {
+                    username: socket.user.username,
+                    userId: socket.user.id,
+                },
             });
 
             socket
@@ -154,7 +151,7 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
                 });
             }
 
-            const payload: Message = {
+            const payload = {
                 id: conversation.id,
                 author: {
                     id: sender?.id,

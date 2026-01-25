@@ -1,1 +1,2 @@
-export * as Auth from "./auth.js";
+export * as AuthDomain from "./auth.js";
+export * as UserDomain from "./user.js";

@@ -9,6 +9,8 @@ export interface IUser extends Document {
     password: string;
     displayName?: string;
     avatarUrl?: string;
+    createdAt: Date;
+    updatedAt: Date;
     comparePassword(password: string): Promise<boolean>;
     isInConversation(conversationId: string): Promise<boolean>;
 }

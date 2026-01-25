@@ -1,26 +1,37 @@
-import type { RequestHandler } from "express";
 import User, { type IUser } from "../models/User.js";
 import mongoose, { type QueryFilter } from "mongoose";
+import { UserDomain } from "../shared/domains/index.js";
+import { UserMapper } from "../mappers/index.js";
+import type { AuthHandler } from "../types/api.types.js";
 
-export const getMe: RequestHandler = async (req, res) => {
-    res.json(req.user);
+export const getMe: AuthHandler<void, UserDomain.GetMeResponse> = async (
+    req,
+    res,
+) => {
+    const response = UserMapper.toGetMeResponse(req.user);
+    return res.json(response);
 };
 
-export const updateMe: RequestHandler = async (req, res) => {
+export const updateMe: AuthHandler<
+    UserDomain.UpdateMeBody,
+    UserDomain.UpdateMeResponse
+> = async (req, res) => {
     try {
         const { displayName, avatarUrl } = req.body;
-        const user = await User.findById(req.user?._id);
+        const user = await User.findById(req.user._id);
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        user.displayName = displayName || user.displayName;
-        user.avatarUrl = avatarUrl || user.avatarUrl;
+        if (displayName) user.displayName = displayName;
+        if (avatarUrl) user.avatarUrl = avatarUrl;
 
         const updatedUser = await user.save();
 
-        return res.json(updatedUser);
+        const response = UserMapper.toUpdateMeResponse(updatedUser);
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -35,27 +46,28 @@ export const updateMe: RequestHandler = async (req, res) => {
     }
 };
 
-export const searchUsers: RequestHandler = async (req, res) => {
+export const searchUsers: AuthHandler<
+    void,
+    UserDomain.SearchUsersResponse,
+    void,
+    UserDomain.SearchUsersQuery
+> = async (req, res) => {
     try {
-        const query = req.query.q as string;
-
-        if (!query) {
-            return res
-                .status(400)
-                .json({ message: "Search query is required" });
-        }
+        const { q: searchTerm } = req.query;
 
         const searchFilter: QueryFilter<IUser> = {
             $or: [
-                { username: { $regex: query, $options: "i" } },
-                { displayName: { $regex: query, $options: "i" } },
+                { username: { $regex: searchTerm, $options: "i" } },
+                { displayName: { $regex: searchTerm, $options: "i" } },
             ],
             _id: { $ne: req.user?._id || null },
         };
 
         const users = await User.find(searchFilter).limit(20);
 
-        return res.json(users);
+        const response = UserMapper.toSearchUsersResponse(users);
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });

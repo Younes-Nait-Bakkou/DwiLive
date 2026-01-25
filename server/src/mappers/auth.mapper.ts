@@ -1,7 +1,7 @@
 import type { IUser } from "../models/User.js";
-import type { Auth } from "../shared/domains/index.js";
+import type { AuthDomain } from "../shared/domains/index.js";
 
-const _toAuthDTO = (user: IUser, token: string): Auth.AuthDTO => {
+const _toAuthDTO = (user: IUser, token: string): AuthDomain.AuthDTO => {
     return {
         token: token,
         user: {
@@ -15,13 +15,13 @@ const _toAuthDTO = (user: IUser, token: string): Auth.AuthDTO => {
 export const toLoginResponse = (
     user: IUser,
     token: string,
-): Auth.LoginResponse => {
+): AuthDomain.LoginResponse => {
     return _toAuthDTO(user, token);
 };
 
 export const toRegisterResponse = (
     user: IUser,
     token: string,
-): Auth.RegisterResponse => {
+): AuthDomain.RegisterResponse => {
     return _toAuthDTO(user, token);
 };

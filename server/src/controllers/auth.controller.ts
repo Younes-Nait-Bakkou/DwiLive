@@ -3,9 +3,9 @@ import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import User from "../models/User.js";
 import config from "../config/index.js";
 import mongoose from "mongoose";
-import { Auth } from "../shared/domains/index.js"; // Import Auth domain
-import type { ApiHandler } from "../shared/api.types.js";
+import { AuthDomain } from "../shared/domains/index.js"; // Import Auth domain
 import { AuthMapper } from "../mappers/index.js";
+import type { ApiHandler } from "../types/api.types.js";
 
 export interface IJwtPayload extends JwtPayload {
     id: string;
@@ -21,8 +21,8 @@ const generateToken = (userId: string) => {
 };
 
 export const register: ApiHandler<
-    Auth.RegisterBody,
-    Auth.RegisterResponse
+    AuthDomain.RegisterBody,
+    AuthDomain.RegisterResponse
 > = async (req, res) => {
     try {
         const { username, password, displayName } = req.body;
@@ -57,10 +57,10 @@ export const register: ApiHandler<
     }
 };
 
-export const login: ApiHandler<Auth.LoginBody, Auth.LoginResponse> = async (
-    req,
-    res,
-) => {
+export const login: ApiHandler<
+    AuthDomain.LoginBody,
+    AuthDomain.LoginResponse
+> = async (req, res) => {
     try {
         const { username, password } = req.body;
 

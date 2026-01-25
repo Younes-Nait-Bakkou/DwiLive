@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getMe, updateMe, searchUsers } from "../../controllers/user.js";
+import {
+    getMe,
+    updateMe,
+    searchUsers,
+} from "../../controllers/user.controller.js";
 import { protect } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
 import { UserDomain } from "../../shared/domains/index.js";

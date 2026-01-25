@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { register, login } from "../../controllers/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
 import { AuthDomain } from "../../shared/domains/index.js"; // Import Auth domain
+import { register, login } from "../../controllers/auth.controller.js";
 
 const router: Router = Router();
 

@@ -1,26 +1,26 @@
 import { object, string, z } from "zod";
-import { conversationIdSchema } from "./conversation.schema.js";
+import { ConversationIdSchema } from "./conversation.js";
 
 export const joinConversationSchema = object({
-    conversationId: conversationIdSchema,
+    conversationId: ConversationIdSchema,
 });
 
 export const leaveConversationSchema = object({
-    conversationId: conversationIdSchema,
+    conversationId: ConversationIdSchema,
 });
 
 export const sendMessageSchema = object({
-    conversationId: conversationIdSchema,
+    conversationId: ConversationIdSchema,
     content: string().min(1),
     type: z.enum(["text", "image"]).optional().default("text"),
 });
 
 export const startTypingSchema = object({
-    conversationId: conversationIdSchema,
+    conversationId: ConversationIdSchema,
 });
 
 export const stopTypingSchema = object({
-    conversationId: conversationIdSchema,
+    conversationId: ConversationIdSchema,
 });
 
 export type JoinConversationRequest = z.infer<typeof joinConversationSchema>;

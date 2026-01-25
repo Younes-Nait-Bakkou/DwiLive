@@ -2,7 +2,7 @@ import { Server as SocketIOServer } from "socket.io";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
-} from "../shared/socket-interfaces.js";
+} from "../shared/constants/events.js";
 
 export type AppServer = SocketIOServer<
     ClientToServerEvents,

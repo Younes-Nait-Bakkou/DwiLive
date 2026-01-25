@@ -27,3 +27,4 @@ export const validateSocket = <T extends EventData>(
         handler(result.data, callback);
     };
 };
+export type { EventData, EventCallback, EventHandler };

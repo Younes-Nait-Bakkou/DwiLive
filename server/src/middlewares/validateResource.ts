@@ -22,13 +22,22 @@ export const validate =
             }
 
             if (parsedData.query) {
-                req.query = parsedData.query as Request["query"];
+                Object.defineProperty(req, "query", {
+                    value: parsedData.query,
+                    writable: true,
+                    enumerable: true,
+                    configurable: true,
+                });
             }
 
             if (parsedData.params) {
-                req.params = parsedData.params as Request["params"];
+                Object.defineProperty(req, "params", {
+                    value: parsedData.params,
+                    writable: true,
+                    enumerable: true,
+                    configurable: true,
+                });
             }
-
             return next();
         } catch (error) {
             if (error instanceof ZodError) {

@@ -16,6 +16,7 @@ import {
     type SendMessagePayload,
 } from "../../shared/domains/socket.js";
 import { MessageMapper } from "../../mappers/index.js";
+import Conversation from "../../models/Conversation.js";
 
 export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
     const joinConversationRoom = async (
@@ -93,6 +94,11 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
                 content,
                 type,
                 sender: socket.user._id,
+            });
+
+            await Conversation.findByIdAndUpdate(conversationId, {
+                lastMessage: message._id,
+                updatedAt: new Date(),
             });
 
             const populatedMessage = await message.populate([

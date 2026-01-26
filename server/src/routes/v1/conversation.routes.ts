@@ -6,7 +6,8 @@ import {
     removeMember,
     getMessages,
     leaveConversation,
-} from "../../controllers/conversation.js";
+    joinConversation,
+} from "../../controllers/conversation.controller.js";
 import { protect } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
 import { ConversationDomain } from "../../shared/domains/index.js";
@@ -36,6 +37,12 @@ router.get(
     "/:conversationId/messages",
     validate(ConversationDomain.GetMessagesSchema),
     withAuth(getMessages),
+);
+
+router.post(
+    "/:conversationId/join",
+    validate(ConversationDomain.JoinConversationSchema),
+    withAuth(joinConversation),
 );
 router.post(
     "/:conversationId/leave",

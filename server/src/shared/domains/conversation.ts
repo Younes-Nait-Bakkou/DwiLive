@@ -62,6 +62,12 @@ export const RemoveMemberSchema = object({
     }),
 });
 
+export const JoinConversationSchema = object({
+    params: object({
+        conversationId: ConversationIdSchema,
+    }),
+});
+
 export const LeaveConversationSchema = object({
     params: object({
         conversationId: ConversationIdSchema,
@@ -87,6 +93,9 @@ export type AddMemberParams = z.infer<typeof AddMemberSchema>["params"];
 
 export type RemoveMemberParams = z.infer<typeof RemoveMemberSchema>["params"];
 
+export type JoinConversationParams = z.infer<
+    typeof JoinConversationSchema
+>["params"];
 export type LeaveConversationParams = z.infer<
     typeof LeaveConversationSchema
 >["params"];
@@ -100,4 +109,5 @@ export type GetConversationsResponse = ConversationDTO[];
 export type AddMemberResponse = ConversationDTO;
 export type RemoveMemberResponse = ConversationDTO;
 export type LeaveConversationResponse = ConversationDTO;
+export type JoinConversationResponse = ConversationDTO;
 export type GetMessagesResponse = MessageDomain.MessageDTO[];

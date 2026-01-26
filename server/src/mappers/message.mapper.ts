@@ -6,7 +6,7 @@ import { isPopulated } from "../utils/typeGuards.js";
 import { UserMapper } from "./index.js";
 
 export const toMessageDTO = (message: IMessage): MessageDomain.MessageDTO => {
-    const conversationId = toPublicId("conv", message.conversation!.id);
+    const conversationId = toPublicId("conv", message.conversation);
 
     const base = {
         id: toPublicId("msg", message.id),

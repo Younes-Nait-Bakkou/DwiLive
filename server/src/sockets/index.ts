@@ -2,10 +2,10 @@ import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import User from "../models/User.js";
-import type { IJwtPayload } from "../controllers/auth.js";
 import { SocketEvent } from "../config/events.js";
 import { registerConversationHandlers } from "./handlers/conversationHandler.js";
 import { jsonParseMiddleware } from "../middlewares/socket.middleware.js";
+import type { IJwtPayload } from "../controllers/auth.controller.js";
 
 export const setupSockets = (io: Server) => {
     io.use(async (socket: Socket, next) => {

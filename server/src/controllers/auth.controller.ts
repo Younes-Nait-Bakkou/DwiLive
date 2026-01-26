@@ -1,9 +1,11 @@
-import type { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import User from "../models/User.js";
 import config from "../config/index.js";
 import mongoose from "mongoose";
+import { AuthDomain } from "../shared/domains/index.js";
+import { AuthMapper } from "../mappers/index.js";
+import type { ApiHandler } from "../types/api.js";
 
 export interface IJwtPayload extends JwtPayload {
     id: string;
@@ -18,7 +20,10 @@ const generateToken = (userId: string) => {
     return jwt.sign(payload, config.jwt.secret, options);
 };
 
-export const register: RequestHandler = async (req, res) => {
+export const register: ApiHandler<
+    AuthDomain.RegisterBody,
+    AuthDomain.RegisterResponse
+> = async (req, res) => {
     try {
         const { username, password, displayName } = req.body;
 
@@ -35,10 +40,9 @@ export const register: RequestHandler = async (req, res) => {
 
         const token = generateToken(user._id.toString());
 
-        return res.status(201).json({
-            token,
-            user,
-        });
+        const response = AuthMapper.toRegisterResponse(user, token);
+
+        return res.status(201).json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -53,7 +57,10 @@ export const register: RequestHandler = async (req, res) => {
     }
 };
 
-export const login: RequestHandler = async (req, res) => {
+export const login: ApiHandler<
+    AuthDomain.LoginBody,
+    AuthDomain.LoginResponse
+> = async (req, res) => {
     try {
         const { username, password } = req.body;
 
@@ -69,10 +76,9 @@ export const login: RequestHandler = async (req, res) => {
 
         const token = generateToken(user._id.toString());
 
-        return res.json({
-            token,
-            user,
-        });
+        const response = AuthMapper.toLoginResponse(user, token);
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });

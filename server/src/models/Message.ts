@@ -2,13 +2,18 @@ import mongoose, { Schema, Document } from "mongoose";
 import type { PopulatedDoc } from "mongoose";
 import type { IConversation } from "./Conversation.js";
 import type { IUser } from "./User.js";
+import type { MessageDomain } from "../shared/domains/index.js";
 
 export interface IMessage extends Document {
     id: string;
     conversation: PopulatedDoc<IConversation>;
-    sender: PopulatedDoc<IUser>;
+    sender?: PopulatedDoc<IUser>;
     content: string;
-    type: "text" | "image";
+    type: "text" | "image" | "system";
+    metadata?:
+        | MessageDomain.UserJoinedMetadata
+        | MessageDomain.GroupRenamedMetadata
+        | MessageDomain.MemberAddedMetadata;
     createdAt: Date;
 }
 
@@ -23,7 +28,9 @@ const messageSchema = new Schema<IMessage>(
         sender: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: function () {
+                return this.type !== "system";
+            },
         },
         content: {
             type: String,
@@ -31,8 +38,12 @@ const messageSchema = new Schema<IMessage>(
         },
         type: {
             type: String,
-            enum: ["text", "image"],
+            enum: ["text", "image", "system"],
             default: "text",
+        },
+        metadata: {
+            type: Schema.Types.Mixed,
+            default: {},
         },
     },
     {

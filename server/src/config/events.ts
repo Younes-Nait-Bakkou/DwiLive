@@ -59,6 +59,16 @@ export const SocketEvent = {
          */
         USER_LEFT_CONVERSATION: "conversation:user_left",
 
+        /**
+         * Notification that a member was forcefully added by an admin.
+         */
+        MEMBER_ADDED_TO_CONVERSATION: "conversation:member_added",
+
+        /**
+         * Notification that a member was kicked/removed by an admin.
+         */
+        MEMBER_KICKED_FROM_CONVERSATION: "conversation:member_kicked",
+
         // --- Message Events ---
         /**
          * A new message has been received in the conversation.

@@ -1,23 +1,25 @@
 import Message from "../../models/Message.js";
 import type { IConversation } from "../../models/Conversation.js";
 import type { IUser } from "../../models/User.js";
-import type { Server, Socket } from "socket.io";
+import type { Socket } from "socket.io";
 import { SocketEvent } from "../../config/events.js";
 import { isPopulated } from "../../utils/typeGuards.js";
-import { ErrorCodes } from "../../types/socket.response.d.js";
-import type { SocketResponse } from "../../types/socket.response.d.js";
 import { validateSocket } from "../../middlewares/socket.validator.js";
+import { ErrorCodes, type SocketResponse } from "../../types/socket.js";
+import type { AppServer } from "../../types/server.js";
 import {
-    joinConversationSchema,
-    leaveConversationSchema,
+    joinConversationRoomSchema,
+    leaveConversationRoomSchema,
     sendMessageSchema,
-    startTypingSchema,
-    stopTypingSchema,
-} from "../../schemas/socket.schema.js";
+    type JoinConversationRoomPayload,
+    type LeaveConversationRoomPayload,
+    type SendMessagePayload,
+} from "../../shared/domains/socket.js";
+import { MessageMapper } from "../../mappers/index.js";
 
-export const registerConversationHandlers = (io: Server, socket: Socket) => {
-    const joinConversation = async (
-        { conversationId }: { conversationId: string },
+export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
+    const joinConversationRoom = async (
+        { conversationId }: JoinConversationRoomPayload,
         callback: (response: SocketResponse) => void,
     ) => {
         try {
@@ -29,25 +31,10 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
+
             socket.join(conversationId);
-
             console.log(`User joined conversation: ${conversationId}`);
-            const message = await Message.create({
-                conversation: conversationId,
-                content,
-                type,
-                sender: socket.user._id,
-            });
 
-            socket
-                .to(conversationId)
-                .emit(SocketEvent.Server.USER_JOINED_CONVERSATION, {
-                    conversationId,
-                    user: {
-                        id: socket.user.id,
-                        username: socket.user.username,
-                    },
-                });
             callback({ status: "OK", data: null });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in joinConversation:", err);
@@ -59,8 +46,8 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
         }
     };
 
-    const leaveConversation = async (
-        { conversationId }: { conversationId: string },
+    const leaveConversationRoom = async (
+        { conversationId }: LeaveConversationRoomPayload,
         callback: (response: SocketResponse) => void,
     ) => {
         try {
@@ -72,14 +59,10 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
+
             socket.leave(conversationId);
             console.log(`User left conversation: ${conversationId}`);
-            socket
-                .to(conversationId)
-                .emit(SocketEvent.Server.USER_LEFT_CONVERSATION, {
-                    conversationId,
-                    userId: socket.user.id,
-                });
+
             callback({ status: "OK", data: null });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in leaveConversation:", err);
@@ -92,15 +75,7 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
     };
 
     const sendMessage = async (
-        {
-            conversationId,
-            content,
-            type,
-        }: {
-            conversationId: string;
-            content: string;
-            type: "text" | "image";
-        },
+        { conversationId, content, type }: SendMessagePayload,
         callback: (response: SocketResponse) => void,
     ) => {
         try {
@@ -129,39 +104,18 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
             const conversation = populatedMessage.conversation;
 
             if (!isPopulated<IUser>(sender)) {
-                console.error(
-                    "Internal Server Error: Message sender not populated for message:",
-                    message._id,
+                throw new Error(
+                    "Internal Server Error: Message sender not populated for message",
                 );
-                return callback({
-                    status: "ERROR",
-                    error: "Internal Server Error. Please try again later.",
-                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
-                });
             }
 
             if (!isPopulated<IConversation>(conversation)) {
-                console.error(
-                    "Internal Server Error: Message conversation not populated for message:",
-                    message._id,
+                throw new Error(
+                    "Internal Server Error: Message conversation not populated for message",
                 );
-                return callback({
-                    status: "ERROR",
-                    error: "Internal Server Error. Please try again later.",
-                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
-                });
             }
 
-            const payload = {
-                id: conversation.id,
-                author: {
-                    id: sender?.id,
-                    username: sender?.username,
-                    avatarUrl: sender?.avatarUrl,
-                },
-                content: populatedMessage.content,
-                createdAt: populatedMessage.createdAt,
-            };
+            const payload = MessageMapper.toMessageDTO(populatedMessage);
 
             io.to(conversationId).emit(
                 SocketEvent.Server.RECEIVE_MESSAGE,
@@ -238,22 +192,22 @@ export const registerConversationHandlers = (io: Server, socket: Socket) => {
 
     socket.on(
         SocketEvent.Client.JOIN_CONVERSATION,
-        validateSocket(joinConversationSchema, joinConversation),
+        validateSocket(joinConversationRoomSchema, joinConversationRoom),
     );
     socket.on(
         SocketEvent.Client.LEAVE_CONVERSATION,
-        validateSocket(leaveConversationSchema, leaveConversation),
+        validateSocket(leaveConversationRoomSchema, leaveConversationRoom),
     );
     socket.on(
         SocketEvent.Client.SEND_MESSAGE,
         validateSocket(sendMessageSchema, sendMessage),
     );
-    socket.on(
-        SocketEvent.Client.TYPING_START,
-        validateSocket(startTypingSchema, startTyping),
-    );
-    socket.on(
-        SocketEvent.Client.TYPING_STOP,
-        validateSocket(stopTypingSchema, stopTyping),
-    );
+    // socket.on(
+    //     SocketEvent.Client.TYPING_START,
+    //     validateSocket(startTypingSchema, startTyping),
+    // );
+    // socket.on(
+    //     SocketEvent.Client.TYPING_STOP,
+    //     validateSocket(stopTypingSchema, stopTyping),
+    // );
 };

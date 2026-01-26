@@ -1,25 +1,17 @@
-import type { RequestHandler } from "express";
 import Conversation, { type IConversation } from "../models/Conversation.js";
 import Message, { type IMessage } from "../models/Message.js";
 import mongoose, { type QueryFilter } from "mongoose";
-import {
-    type CreateConversationRequest,
-    type AddMemberRequest,
-    type RemoveMemberRequest,
-    type LeaveConversationRequest,
-    type GetMessagesRequest,
-} from "../schemas/conversation.schema.js";
 import { log } from "node:console";
+import type { AuthHandler } from "../types/api.js";
+import type { ConversationDomain } from "../shared/domains/index.js";
+import { ConversationMapper, MessageMapper } from "../mappers/index.js";
 
-export const createConversation: RequestHandler<
-    object,
-    object,
-    CreateConversationRequest["body"]
+export const createConversation: AuthHandler<
+    ConversationDomain.CreateConversationBody,
+    ConversationDomain.CreateConversationResponse
 > = async (req, res) => {
     try {
         const { type, participants, name, isPrivate } = req.body;
-
-        if (!req.user) return;
 
         if (type === "direct") {
             const otherUserId = new mongoose.Types.ObjectId(participants![0]);
@@ -30,12 +22,11 @@ export const createConversation: RequestHandler<
                 participants: { $all: [myId, otherUserId], $size: 2 },
             };
 
-            // Check if direct conversation already exists
             let conversation = await Conversation.findOne(conversationFilter);
 
             if (conversation) {
                 await conversation.populate("participants admin");
-                return res.status(200).json(conversation);
+                return res.status(200).json();
             }
 
             conversation = await Conversation.create({
@@ -45,7 +36,13 @@ export const createConversation: RequestHandler<
             });
 
             await conversation.populate("participants admin");
-            return res.status(201).json(conversation);
+
+            const response = ConversationMapper.toCreateConversationResponse(
+                conversation,
+                req.user._id,
+            );
+
+            return res.status(201).json(response);
         }
 
         if (type === "group") {
@@ -63,8 +60,12 @@ export const createConversation: RequestHandler<
                 admin: req.user._id,
             });
 
-            await conversation.populate("participants admin");
-            return res.status(201).json(conversation);
+            const response = ConversationMapper.toCreateConversationResponse(
+                conversation,
+                req.user._id,
+            );
+
+            return res.status(201).json(response);
         }
 
         return res.status(400).json({ message: "Invalid conversation type" });
@@ -83,21 +84,30 @@ export const createConversation: RequestHandler<
     }
 };
 
-export const getConversations: RequestHandler = async (req, res) => {
+export const getConversations: AuthHandler<
+    void,
+    ConversationDomain.GetConversationsResponse
+> = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        console.log(req.user.id);
+
         const conversationFilter: QueryFilter<IConversation> = {
             participants: req.user?._id,
         };
+
         const conversations = await Conversation.find(conversationFilter)
             .populate("participants")
             .populate("lastMessage")
             .sort({ updatedAt: -1 });
 
-        return res.json(conversations);
+        const response = ConversationMapper.toGetConversationsResponse(
+            conversations,
+            req.user._id,
+        );
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -112,10 +122,10 @@ export const getConversations: RequestHandler = async (req, res) => {
     }
 };
 
-export const addMember: RequestHandler<
-    AddMemberRequest["params"],
-    object,
-    AddMemberRequest["body"]
+export const addMember: AuthHandler<
+    ConversationDomain.AddMemberBody,
+    ConversationDomain.AddMemberResponse,
+    ConversationDomain.AddMemberParams
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -139,13 +149,21 @@ export const addMember: RequestHandler<
         }
 
         if (conversation.isUserParticipant(userId)) {
-            return res.status(400).json({ message: "User already in conversation" });
+            return res
+                .status(400)
+                .json({ message: "User already in conversation" });
         }
 
         conversation.participants.push(new mongoose.Types.ObjectId(userId));
+
         await conversation.save();
 
-        return res.json({ message: "User added successfully" });
+        const response = ConversationMapper.toAddMemberResponse(
+            conversation,
+            req.user._id,
+        );
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -160,8 +178,10 @@ export const addMember: RequestHandler<
     }
 };
 
-export const removeMember: RequestHandler<
-    RemoveMemberRequest["params"]
+export const removeMember: AuthHandler<
+    void,
+    ConversationDomain.RemoveMemberResponse,
+    ConversationDomain.RemoveMemberParams
 > = async (req, res) => {
     try {
         const { conversationId, userId } = req.params;
@@ -184,19 +204,25 @@ export const removeMember: RequestHandler<
         }
 
         if (!conversation.isUserParticipant(userId)) {
-            return res
-                .status(400)
-                .json({ message: "Member is not a participant of this conversation" });
+            return res.status(400).json({
+                message: "Member is not a participant of this conversation",
+            });
         }
 
         if (userId.toString() == req.user?.toString()) {
-            return res
-                .status(400)
-                .json({ message: "You cannot kick yourself out of the conversation" });
+            return res.status(400).json({
+                message: "You cannot kick yourself out of the conversation",
+            });
         }
 
         await conversation.save();
-        return res.json({ message: "Member removed successfully" });
+
+        const response = ConversationMapper.toRemoveMemberResponse(
+            conversation,
+            req.user._id,
+        );
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -211,11 +237,11 @@ export const removeMember: RequestHandler<
     }
 };
 
-export const getMessages: RequestHandler<
-    GetMessagesRequest["params"],
-    object,
-    object,
-    GetMessagesRequest["query"]
+export const getMessages: AuthHandler<
+    void,
+    ConversationDomain.GetMessagesResponse,
+    ConversationDomain.GetMessagesParams,
+    ConversationDomain.GetMessagesQuery
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -223,7 +249,7 @@ export const getMessages: RequestHandler<
 
         const conversationFilter: QueryFilter<IConversation> = {
             _id: conversationId,
-            participants: req.user?._id,
+            participants: req.user._id,
         };
 
         // Verify user is in conversation
@@ -244,16 +270,11 @@ export const getMessages: RequestHandler<
             .limit(Number(limit))
             .populate("senderId", "username displayName avatarUrl");
 
-        const formattedMessages = messages.map((msg) => ({
-            id: msg._id,
-            conversation: msg.conversation,
-            author: msg.sender,
-            content: msg.content,
-            createdAt: msg.createdAt,
-            type: msg.type,
-        }));
+        const response = messages
+            .map((m) => MessageMapper.toMessageDTO(m))
+            .reverse();
 
-        return res.json(formattedMessages.reverse());
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
@@ -268,13 +289,14 @@ export const getMessages: RequestHandler<
     }
 };
 
-export const leaveConversation: RequestHandler<LeaveConversationRequest["params"]> = async (
-    req,
-    res,
-) => {
+export const leaveConversation: AuthHandler<
+    void,
+    ConversationDomain.LeaveConversationResponse,
+    ConversationDomain.LeaveConversationParams
+> = async (req, res) => {
     try {
         const { conversationId } = req.params;
-        const userId = req.user!._id;
+        const userId = req.user._id;
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -298,11 +320,17 @@ export const leaveConversation: RequestHandler<LeaveConversationRequest["params"
             conversation.admin?.toString() === userId?.toString()
         ) {
             await Conversation.findByIdAndDelete(conversationId);
-            return res.json({ message: "Conversation deleted as admin left" });
+            return res.status(204);
         }
 
         await conversation.save();
-        return res.json({ message: "You have left the conversation" });
+
+        const response = ConversationMapper.toLeaveConversationResponse(
+            conversation,
+            req.user._id,
+        );
+
+        return res.json(response);
     } catch (error: unknown) {
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });

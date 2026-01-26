@@ -356,8 +356,8 @@ export const leaveConversation: AuthHandler<
 
 export const joinConversation: AuthHandler<
     void,
-    ConversationDomain.LeaveConversationResponse,
-    ConversationDomain.LeaveConversationParams
+    ConversationDomain.JoinConversationResponse,
+    ConversationDomain.JoinConversationParams
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -368,24 +368,22 @@ export const joinConversation: AuthHandler<
             return res.status(404).json({ message: "Conversation not found" });
         }
 
-        if (!conversation.isUserParticipant(userId)) {
+        if (conversation.isUserParticipant(userId)) {
             return res
                 .status(400)
-                .json({ message: "You are not in this conversation" });
+                .json({ message: "You are already in this conversation" });
         }
 
-        if (conversation.type === "direct") {
+        if (conversation.type !== "group") {
             return res
                 .status(400)
-                .json({ message: "Cannot leave a direct chat" });
+                .json({ message: "You can only join a group conversation" });
         }
 
-        if (
-            conversation.type === "group" &&
-            conversation.admin?.toString() === userId?.toString()
-        ) {
-            await Conversation.findByIdAndDelete(conversationId);
-            return res.status(204);
+        if (conversation.isPrivate) {
+            return res
+                .status(400)
+                .json({ message: "You can only join public groups" });
         }
 
         await conversation.save();

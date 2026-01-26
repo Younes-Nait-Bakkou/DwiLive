@@ -109,4 +109,5 @@ export type GetConversationsResponse = ConversationDTO[];
 export type AddMemberResponse = ConversationDTO;
 export type RemoveMemberResponse = ConversationDTO;
 export type LeaveConversationResponse = ConversationDTO;
+export type JoinConversationResponse = ConversationDTO;
 export type GetMessagesResponse = MessageDomain.MessageDTO[];

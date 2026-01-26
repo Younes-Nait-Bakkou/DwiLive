@@ -60,6 +60,8 @@ export const createConversation: AuthHandler<
                 admin: req.user._id,
             });
 
+            await conversation.populate("participants admin");
+
             const response = ConversationMapper.toCreateConversationResponse(
                 conversation,
                 req.user._id,
@@ -98,17 +100,24 @@ export const getConversations: AuthHandler<
         };
 
         const conversations = await Conversation.find(conversationFilter)
-            .populate("participants")
-            .populate("lastMessage")
+            .populate("participants admin")
+            .populate({
+                path: "lastMessage",
+                populate: {
+                    path: "sender",
+                },
+            })
             .sort({ updatedAt: -1 });
 
         const response = ConversationMapper.toGetConversationsResponse(
             conversations,
             req.user._id,
         );
+        console.log(response);
 
         return res.json(response);
     } catch (error: unknown) {
+        console.log(error);
         if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ message: error.message });
         }
@@ -260,7 +269,7 @@ export const getMessages: AuthHandler<
                 .json({ message: "Access denied or conversation not found" });
         }
 
-        const query: QueryFilter<IMessage> = { conversationId };
+        const query: QueryFilter<IMessage> = { conversation: conversationId };
         if (before) {
             query.createdAt = { $lt: new Date(before) };
         }
@@ -268,7 +277,7 @@ export const getMessages: AuthHandler<
         const messages = await Message.find(query)
             .sort({ createdAt: -1 })
             .limit(Number(limit))
-            .populate("senderId", "username displayName avatarUrl");
+            .populate("sender");
 
         const response = messages
             .map((m) => MessageMapper.toMessageDTO(m))
@@ -290,6 +299,62 @@ export const getMessages: AuthHandler<
 };
 
 export const leaveConversation: AuthHandler<
+    void,
+    ConversationDomain.LeaveConversationResponse,
+    ConversationDomain.LeaveConversationParams
+> = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const userId = req.user._id;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        if (!conversation.isUserParticipant(userId)) {
+            return res
+                .status(400)
+                .json({ message: "You are not in this conversation" });
+        }
+
+        if (conversation.type === "direct") {
+            return res
+                .status(400)
+                .json({ message: "Cannot leave a direct chat" });
+        }
+
+        if (
+            conversation.type === "group" &&
+            conversation.admin?.toString() === userId?.toString()
+        ) {
+            await Conversation.findByIdAndDelete(conversationId);
+            return res.status(204);
+        }
+
+        await conversation.save();
+
+        const response = ConversationMapper.toLeaveConversationResponse(
+            conversation,
+            req.user._id,
+        );
+
+        return res.json(response);
+    } catch (error: unknown) {
+        if (error instanceof mongoose.Error.ValidationError) {
+            return res.status(400).json({ message: error.message });
+        }
+        // Handle Standard Errors
+        if (error instanceof Error) {
+            return res.status(500).json({ message: error.message });
+        }
+
+        // Handle Unknowns
+        return res.status(500).json({ message: "An unknown error occurred" });
+    }
+};
+
+export const joinConversation: AuthHandler<
     void,
     ConversationDomain.LeaveConversationResponse,
     ConversationDomain.LeaveConversationParams

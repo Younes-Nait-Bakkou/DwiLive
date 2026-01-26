@@ -80,4 +80,7 @@ conversationSchema.methods.isUserParticipant = function (
     );
 };
 
-export default mongoose.model<IConversation>("Conversation", conversationSchema);
+export default mongoose.model<IConversation>(
+    "Conversation",
+    conversationSchema,
+);

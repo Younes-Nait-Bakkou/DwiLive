@@ -6,7 +6,7 @@ import {
     removeMember,
     getMessages,
     leaveConversation,
-} from "../../controllers/conversation.js";
+} from "../../controllers/conversation.controller.js";
 import { protect } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
 import { ConversationDomain } from "../../shared/domains/index.js";

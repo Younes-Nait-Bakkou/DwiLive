@@ -7,6 +7,7 @@ import globalRouter from "./routes/index.js";
 import { Server } from "socket.io";
 import { setupSockets } from "./sockets/index.js";
 import type { AppServer } from "./types/server.js";
+import { setupDocs } from "./docs/index.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -27,6 +28,7 @@ const io: AppServer = new Server(httpServer, {
 });
 
 setupSockets(io);
+setupDocs(app);
 
 app.use("/api", globalRouter);
 

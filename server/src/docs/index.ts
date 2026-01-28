@@ -1,79 +1,86 @@
 import swaggerUi from "swagger-ui-express";
-import YAML from "yamljs";
+import fs from "fs";
 import type { Express } from "express";
 import config from "../config/index.js";
 import path from "path";
 import Generator from "@asyncapi/generator";
-import express from "express";
+import express, { Router } from "express";
+import YAML from "yamljs";
 
-const openapiSpec = YAML.load(
+const liveOpenApiSpec = JSON.parse(
+    fs.readFileSync(
+        path.join(config.ROOT_DIR, "./src/docs/openapi.json"),
+        "utf-8",
+    ),
+);
+
+const staticOpenApiSpec = YAML.load(
     path.join(config.ROOT_DIR, "./src/docs/openapi.yaml"),
 );
 
 export async function setupDocs(app: Express) {
-    // --- OpenAPI (Swagger) Docs ---
-    app.use(
-        "/docs",
-        swaggerUi.serve,
-        swaggerUi.setup(openapiSpec, {
-            explorer: true,
-            customSiteTitle: "My API Docs",
-        }),
+    const docsRouter = Router();
+
+    // --- Options Configuration ---
+    // It's best to define options outside to pass them to BOTH serveFiles and setup
+    const liveOptions = {
+        explorer: true,
+        customSiteTitle: "Live API Docs",
+    };
+
+    const staticOptions = {
+        explorer: true,
+        customSiteTitle: "Static API Docs",
+    };
+
+    // --- Live OpenAPI (Swagger) Docs ---
+    docsRouter.use(
+        "/live/openapi",
+        // FIX: Use serveFiles and pass the spec/options here too
+        swaggerUi.serveFiles(liveOpenApiSpec, liveOptions),
+        swaggerUi.setup(liveOpenApiSpec, liveOptions),
     );
 
-    app.get("/openapi.yaml", (_req, res) => {
-        const yamlpath = path.join(config.ROOT_DIR, "./src/docs/openapi.yaml");
+    docsRouter.get("/live/openapi.json", (_req, res) => {
+        res.json(liveOpenApiSpec);
+    });
 
+    // --- Static OpenAPI (Swagger) Docs ---
+    docsRouter.use(
+        "/static/openapi",
+        // FIX: Use serveFiles here as well
+        swaggerUi.serveFiles(staticOpenApiSpec, staticOptions),
+        swaggerUi.setup(staticOpenApiSpec, staticOptions),
+    );
+
+    docsRouter.get("/static/openapi.yaml", (_req, res) => {
+        const yamlpath = path.join(config.ROOT_DIR, "./src/docs/openapi.yaml");
         res.sendFile(yamlpath);
     });
 
-    app.get("/openapi.json", (_req, res) => {
-        res.json(openapiSpec);
-    });
-
     // --- AsyncAPI Docs ---
+    // (Your existing AsyncAPI code remains unchanged)
     const asyncapiHtmlOutputPath = path.join(
         config.ROOT_DIR,
         "tmp",
         "asyncapi-html",
     );
-
     const asyncapiSpecPath = path.join(
         config.ROOT_DIR,
         "./src/docs/asyncapi.yaml",
     );
 
     try {
-        console.log("Attempting to generate AsyncAPI documentation...");
         const generator = new Generator(
             "@asyncapi/html-template",
             asyncapiHtmlOutputPath,
-            {
-                forceWrite: true,
-                install: true,
-            },
+            { forceWrite: true, install: true },
         );
-
         await generator.generateFromFile(asyncapiSpecPath);
-        console.log(
-            `AsyncAPI HTML documentation generated to: ${asyncapiHtmlOutputPath}`,
-        );
-
-        app.use("/asyncapi", express.static(asyncapiHtmlOutputPath));
-
-        app.get("/asyncapi.yaml", (_req, res) => {
-            res.sendFile(asyncapiSpecPath);
-        });
+        docsRouter.use("/asyncapi", express.static(asyncapiHtmlOutputPath));
     } catch (error) {
-        console.error(
-            "Error generating or serving AsyncAPI documentation:",
-            error,
-        );
-        app.get("/asyncapi", (_req, res) => {
-            res.status(500).send("Error generating AsyncAPI documentation.");
-        });
-        app.get("/asyncapi.yaml", (_req, res) => {
-            res.status(500).send("Error retrieving AsyncAPI specification.");
-        });
+        console.error("Error generating AsyncAPI docs:", error);
     }
+
+    app.use("/docs", docsRouter);
 }

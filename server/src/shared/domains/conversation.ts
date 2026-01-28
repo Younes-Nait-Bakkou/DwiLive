@@ -1,4 +1,4 @@
-import { object, string, array, boolean, z } from "zod";
+import { z } from "../utils/zod.js";
 import { createPrefixedIdSchema } from "../../shared/utils/zod.js";
 import { UserIdSchema } from "./user.js";
 import type { MessageDomain, UserDomain } from "./index.js";
@@ -22,65 +22,68 @@ export const ConversationIdSchema = createPrefixedIdSchema("conv", {
     requiredError: "Conversation ID is required",
 });
 
-export const CreateConversationSchema = object({
-    body: object({
-        type: z.enum(["direct", "group"]),
-        participants: array(UserIdSchema).optional().default([]),
-        name: string().optional(),
-        isPrivate: boolean().optional().default(true),
-    }).superRefine((data, ctx) => {
-        if (data.type === "group" && !data.name) {
-            ctx.addIssue({
-                code: "custom",
-                message: "Group name is required",
-                path: ["name"],
-            });
-        }
-        if (data.type === "direct" && data.participants?.length !== 1) {
-            ctx.addIssue({
-                code: "custom",
-                message: "Direct chat requires exactly one other participant",
-                path: ["participants"],
-            });
-        }
-    }),
+export const CreateConversationSchema = z.object({
+    body: z
+        .object({
+            type: z.enum(["direct", "group"]),
+            participants: z.array(UserIdSchema).optional().default([]),
+            name: z.string().optional(),
+            isPrivate: z.boolean().optional().default(true),
+        })
+        .superRefine((data, ctx) => {
+            if (data.type === "group" && !data.name) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Group name is required",
+                    path: ["name"],
+                });
+            }
+            if (data.type === "direct" && data.participants?.length !== 1) {
+                ctx.addIssue({
+                    code: "custom",
+                    message:
+                        "Direct chat requires exactly one other participant",
+                    path: ["participants"],
+                });
+            }
+        }),
 });
 
-export const AddMemberSchema = object({
-    body: object({
+export const AddMemberSchema = z.object({
+    body: z.object({
         userId: UserIdSchema,
     }),
-    params: object({
+    params: z.object({
         conversationId: ConversationIdSchema,
     }),
 });
 
-export const RemoveMemberSchema = object({
-    params: object({
+export const RemoveMemberSchema = z.object({
+    params: z.object({
         conversationId: ConversationIdSchema,
         userId: UserIdSchema,
     }),
 });
 
-export const JoinConversationSchema = object({
-    params: object({
+export const JoinConversationSchema = z.object({
+    params: z.object({
         conversationId: ConversationIdSchema,
     }),
 });
 
-export const LeaveConversationSchema = object({
-    params: object({
+export const LeaveConversationSchema = z.object({
+    params: z.object({
         conversationId: ConversationIdSchema,
     }),
 });
 
-export const GetMessagesSchema = object({
-    params: object({
+export const GetMessagesSchema = z.object({
+    params: z.object({
         conversationId: ConversationIdSchema,
     }),
-    query: object({
-        limit: string().optional(),
-        before: string().optional(),
+    query: z.object({
+        limit: z.string().optional(),
+        before: z.string().optional(),
     }),
 });
 

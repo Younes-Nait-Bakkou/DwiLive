@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "../utils/zod.js";
 
 // --- Types (DTOs) ---
 export interface AuthDTO {

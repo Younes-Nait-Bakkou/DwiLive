@@ -1,25 +1,25 @@
-import { object, string, z } from "zod";
+import { z } from "../utils/zod.js";
 import { ConversationIdSchema } from "./conversation.js";
 
-export const joinConversationRoomSchema = object({
+export const joinConversationRoomSchema = z.object({
     conversationId: ConversationIdSchema,
 });
 
-export const leaveConversationRoomSchema = object({
+export const leaveConversationRoomSchema = z.object({
     conversationId: ConversationIdSchema,
 });
 
-export const sendMessageSchema = object({
+export const sendMessageSchema = z.object({
     conversationId: ConversationIdSchema,
-    content: string().min(1),
+    content: z.string().min(1),
     type: z.enum(["text", "image"]).optional().default("text"),
 });
 
-export const startTypingSchema = object({
+export const startTypingSchema = z.object({
     conversationId: ConversationIdSchema,
 });
 
-export const stopTypingSchema = object({
+export const stopTypingSchema = z.object({
     conversationId: ConversationIdSchema,
 });
 

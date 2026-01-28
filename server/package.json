@@ -13,13 +13,16 @@
         "start": "node dist/index.js",
         "seed": "tsx src/seeds/index.ts",
         "seed:users": "pnpm seed --users",
-        "postman:generate": "tsx src/postman/index.ts"
+        "postman:generate": "tsx src/postman/index.ts",
+        "docs:generate": "tsx src/docs/generator.ts",
+        "docs:generate:asyncapi": "tsx src/docs/asyncapi-generator.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "type": "module",
     "devDependencies": {
+        "@asteasolutions/zod-to-openapi": "^8.4.0",
         "@eslint/js": "^9.39.2",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",

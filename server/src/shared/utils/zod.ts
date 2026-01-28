@@ -1,5 +1,10 @@
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { isValidObjectId } from "mongoose";
+
+extendZodWithOpenApi(z);
+
+export { z };
 
 /**
  * Creates a Zod schema that strips a prefix and validates the MongoDB ObjectId.

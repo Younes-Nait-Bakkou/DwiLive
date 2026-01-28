@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "../utils/zod.js";
 import { createPrefixedIdSchema } from "../../shared/utils/zod.js";
 
 // --- Types (DTOs) ---

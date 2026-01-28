@@ -11,6 +11,8 @@ import {
     joinConversationRoomSchema,
     leaveConversationRoomSchema,
     sendMessageSchema,
+    startTypingSchema,
+    stopTypingSchema,
     type JoinConversationRoomPayload,
     type LeaveConversationRoomPayload,
     type SendMessagePayload,
@@ -106,27 +108,11 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
                 "conversation",
             ]);
 
-            const sender = populatedMessage.sender;
-            const conversation = populatedMessage.conversation;
-
-            if (!isPopulated<IUser>(sender)) {
-                throw new Error(
-                    "Internal Server Error: Message sender not populated for message",
-                );
-            }
-
-            if (!isPopulated<IConversation>(conversation)) {
-                throw new Error(
-                    "Internal Server Error: Message conversation not populated for message",
-                );
-            }
-
             const payload = MessageMapper.toMessageDTO(populatedMessage);
 
-            io.to(conversationId).emit(
-                SocketEvent.Server.RECEIVE_MESSAGE,
-                payload,
-            );
+            socket
+                .to(conversationId)
+                .emit(SocketEvent.Server.RECEIVE_MESSAGE, payload);
             callback({ status: "OK", data: payload });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in sendMessage:", err);
@@ -151,11 +137,13 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
+
             socket.to(conversationId).emit(SocketEvent.Server.DISPLAY_TYPING, {
                 conversationId,
                 username: socket.user.username,
                 isTyping: true,
             });
+
             callback({ status: "OK", data: null });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in startTyping:", err);
@@ -180,11 +168,13 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
                     code: ErrorCodes.UNAUTHORIZED,
                 });
             }
+
             socket.to(conversationId).emit(SocketEvent.Server.DISPLAY_TYPING, {
                 conversationId,
                 username: socket.user.username,
                 isTyping: false,
             });
+
             callback({ status: "OK", data: null });
         } catch (err) {
             console.error("CRITICAL SOCKET ERROR in stopTyping:", err);
@@ -208,12 +198,12 @@ export const registerConversationHandlers = (io: AppServer, socket: Socket) => {
         SocketEvent.Client.SEND_MESSAGE,
         validateSocket(sendMessageSchema, sendMessage),
     );
-    // socket.on(
-    //     SocketEvent.Client.TYPING_START,
-    //     validateSocket(startTypingSchema, startTyping),
-    // );
-    // socket.on(
-    //     SocketEvent.Client.TYPING_STOP,
-    //     validateSocket(stopTypingSchema, stopTyping),
-    // );
+    socket.on(
+        SocketEvent.Client.TYPING_START,
+        validateSocket(startTypingSchema, startTyping),
+    );
+    socket.on(
+        SocketEvent.Client.TYPING_STOP,
+        validateSocket(stopTypingSchema, stopTyping),
+    );
 };

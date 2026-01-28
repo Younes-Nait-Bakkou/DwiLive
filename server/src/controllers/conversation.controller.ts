@@ -329,7 +329,7 @@ export const leaveConversation: AuthHandler<
             conversation.admin?.toString() === userId?.toString()
         ) {
             await Conversation.findByIdAndDelete(conversationId);
-            return res.status(204);
+            return res.status(204).send();
         }
 
         await conversation.save();

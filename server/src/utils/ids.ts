@@ -21,12 +21,13 @@ export const toPublicId = (
     let rawId: unknown = input;
 
     if (typeof input === "object" && "_id" in input && input._id) {
-        rawId = input._id;
+        rawId = input._id.toString();
     }
 
     if (Buffer.isBuffer(rawId)) {
         return `${prefix}_${rawId.toString("hex")}`;
     }
+
     if (typeof rawId === "string") {
         return `${prefix}_${rawId}`;
     }

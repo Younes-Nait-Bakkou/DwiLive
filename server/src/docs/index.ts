@@ -59,28 +59,20 @@ export async function setupDocs(app: Express) {
     });
 
     // --- AsyncAPI Docs ---
-    // (Your existing AsyncAPI code remains unchanged)
     const asyncapiHtmlOutputPath = path.join(
         config.ROOT_DIR,
         "tmp",
         "asyncapi-html",
     );
+    docsRouter.use("/asyncapi", express.static(asyncapiHtmlOutputPath));
+
     const asyncapiSpecPath = path.join(
         config.ROOT_DIR,
         "./src/docs/asyncapi.yaml",
     );
-
-    try {
-        const generator = new Generator(
-            "@asyncapi/html-template",
-            asyncapiHtmlOutputPath,
-            { forceWrite: true, install: true },
-        );
-        await generator.generateFromFile(asyncapiSpecPath);
-        docsRouter.use("/asyncapi", express.static(asyncapiHtmlOutputPath));
-    } catch (error) {
-        console.error("Error generating AsyncAPI docs:", error);
-    }
+    docsRouter.get("/asyncapi.yaml", (_req, res) => {
+        res.sendFile(asyncapiSpecPath);
+    });
 
     app.use("/docs", docsRouter);
 }

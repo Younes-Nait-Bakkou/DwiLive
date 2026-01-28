@@ -14,7 +14,8 @@
         "seed": "tsx src/seeds/index.ts",
         "seed:users": "pnpm seed --users",
         "postman:generate": "tsx src/postman/index.ts",
-        "docs:generate": "tsx src/docs/generator.ts"
+        "docs:generate": "tsx src/docs/generator.ts",
+        "docs:generate:asyncapi": "tsx src/docs/asyncapi-generator.ts"
     },
     "keywords": [],
     "author": "",

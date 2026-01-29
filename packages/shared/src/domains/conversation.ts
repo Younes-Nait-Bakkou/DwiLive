@@ -1,5 +1,5 @@
 import { z } from "../utils/zod.js";
-import { createPrefixedIdSchema } from "../../shared/utils/zod.js";
+import { ZodUtils } from "../utils/index.js";
 import { UserIdSchema } from "./user.js";
 import type { MessageDomain, UserDomain } from "./index.js";
 
@@ -17,7 +17,7 @@ export interface ConversationDTO {
 }
 
 // --- Requests (Zod Schemas) ---
-export const ConversationIdSchema = createPrefixedIdSchema("conv", {
+export const ConversationIdSchema = ZodUtils.createPrefixedIdSchema("conv", {
     invalidError: "Conversation ID is invalid",
     requiredError: "Conversation ID is required",
 });

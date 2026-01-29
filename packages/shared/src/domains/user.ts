@@ -1,5 +1,5 @@
 import { z } from "../utils/zod.js";
-import { createPrefixedIdSchema } from "../../shared/utils/zod.js";
+import { ZodUtils } from "../utils/index.js";
 
 // --- Types (DTOs) ---
 export interface UserDTO {
@@ -12,7 +12,7 @@ export interface UserDTO {
 }
 
 // --- Schemas ---
-export const UserIdSchema = createPrefixedIdSchema("user", {
+export const UserIdSchema = ZodUtils.createPrefixedIdSchema("user", {
     invalidError: "User ID is invalid",
     requiredError: "User ID is required",
 });

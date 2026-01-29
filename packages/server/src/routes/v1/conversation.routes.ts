@@ -10,7 +10,7 @@ import {
 } from "../../controllers/conversation.controller.js";
 import { protect } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
-import { ConversationDomain } from "../../shared/domains/index.js";
+import { ConversationDomain } from "@dwilive/shared/domains";
 import { withAuth } from "../../utils/routes.js";
 
 const router: Router = Router();

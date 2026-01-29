@@ -2,7 +2,7 @@ import {
     OpenAPIRegistry,
     OpenApiGeneratorV3,
 } from "@asteasolutions/zod-to-openapi";
-import { AuthDomain } from "../shared/domains/index.js";
+import { AuthDomain } from "@dwilive/shared/domains";
 import fs from "fs";
 import path from "path";
 import config from "../config/index.js";

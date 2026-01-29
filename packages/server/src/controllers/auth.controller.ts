@@ -3,7 +3,7 @@ import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import User from "../models/User.js";
 import config from "../config/index.js";
 import mongoose from "mongoose";
-import { AuthDomain } from "../shared/domains/index.js";
+import { AuthDomain } from "@dwilive/shared/domains";
 import { AuthMapper } from "../mappers/index.js";
 import type { ApiHandler } from "../types/api.js";
 

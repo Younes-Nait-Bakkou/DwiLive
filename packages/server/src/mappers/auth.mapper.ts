@@ -1,5 +1,5 @@
 import type { IUser } from "../models/User.js";
-import type { AuthDomain } from "../shared/domains/index.js";
+import type { AuthDomain } from "@dwilive/shared/domains";
 import { UserMapper } from "./index.js";
 
 const _toAuthDTO = (user: IUser, token: string): AuthDomain.AuthDTO => {

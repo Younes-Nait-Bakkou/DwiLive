@@ -1,5 +1,5 @@
 import type { IUser } from "../models/User.js";
-import type { UserDomain } from "../shared/domains/index.js";
+import type { UserDomain } from "@dwilive/shared/domains";
 import { toPublicId } from "../utils/ids.js";
 
 export const toUserDTO = (user: IUser): UserDomain.UserDTO => {

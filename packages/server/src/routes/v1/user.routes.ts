@@ -6,7 +6,7 @@ import {
 } from "../../controllers/user.controller.js";
 import { protect } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
-import { UserDomain } from "../../shared/domains/index.js";
+import { UserDomain } from "@dwilive/shared/domains";
 import { withAuth } from "../../utils/routes.js";
 
 const router: Router = Router();

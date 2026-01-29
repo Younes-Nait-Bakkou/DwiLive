@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { ErrorCodes, type SocketResponse } from "../types/socket.js";
-
-type EventData = { [key: string]: unknown };
-type EventCallback = (response: SocketResponse) => void;
-type EventHandler<T extends EventData> = (
-    data: T,
-    callback: EventCallback,
-) => void;
+import {
+    type EventData,
+    type EventCallback,
+    type EventHandler,
+    ErrorCodes,
+    type SocketResponse,
+} from "@dwilive/shared/types/socket.js";
 
 export const validateSocket = <T extends EventData>(
     schema: z.ZodSchema<T>,
@@ -26,4 +25,4 @@ export const validateSocket = <T extends EventData>(
         handler(result.data, callback);
     };
 };
-export type { EventData, EventCallback, EventHandler };
+

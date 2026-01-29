@@ -1,7 +1,7 @@
 import type { IConversation } from "../models/Conversation.js";
 import type { IMessage } from "../models/Message.js";
 import type { IUser } from "../models/User.js";
-import type { ConversationDomain } from "../shared/domains/index.js";
+import type { ConversationDomain } from "@dwilive/shared/domains";
 import { toPublicId } from "../utils/ids.js";
 import { isPopulated } from "../utils/typeGuards.js";
 import { MessageMapper, UserMapper } from "./index.js";

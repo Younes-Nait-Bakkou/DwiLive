@@ -2,10 +2,10 @@ import Message from "../../models/Message.js";
 import type { IConversation } from "../../models/Conversation.js";
 import type { IUser } from "../../models/User.js";
 import type { Socket } from "socket.io";
-import { SocketEvent } from "../../config/events.js";
+import { SocketEvent } from "@dwilive/shared/constants";
 import { isPopulated } from "../../utils/typeGuards.js";
 import { validateSocket } from "../../middlewares/socket.validator.js";
-import { ErrorCodes, type SocketResponse } from "../../types/socket.js";
+import { ErrorCodes, type SocketResponse } from "@dwilive/shared/types/socket.js";
 import type { AppServer } from "../../types/server.js";
 import {
     joinConversationRoomSchema,
@@ -16,7 +16,7 @@ import {
     type JoinConversationRoomPayload,
     type LeaveConversationRoomPayload,
     type SendMessagePayload,
-} from "../../shared/domains/socket.js";
+} from "@dwilive/shared/domains/socket.js";
 import { MessageMapper } from "../../mappers/index.js";
 import Conversation from "../../models/Conversation.js";
 

@@ -3,7 +3,7 @@ import Message, { type IMessage } from "../models/Message.js";
 import mongoose, { type QueryFilter } from "mongoose";
 import { log } from "node:console";
 import type { AuthHandler } from "../types/api.js";
-import type { ConversationDomain } from "../shared/domains/index.js";
+import type { ConversationDomain } from "@dwilive/shared/domains";
 import { ConversationMapper, MessageMapper } from "../mappers/index.js";
 
 export const createConversation: AuthHandler<

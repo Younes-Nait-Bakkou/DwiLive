@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 import type { PopulatedDoc } from "mongoose";
 import type { IConversation } from "./Conversation.js";
 import type { IUser } from "./User.js";
-import type { MessageDomain } from "../shared/domains/index.js";
+import type { MessageDomain } from "@dwilive/shared/domains";
 
 export interface IMessage extends Document {
     id: string;

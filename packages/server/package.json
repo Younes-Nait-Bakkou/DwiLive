@@ -51,6 +51,7 @@
         "@asyncapi/cli": "^5.0.5",
         "@asyncapi/generator": "^3.0.1",
         "@asyncapi/html-template": "^3.5.0",
+        "@dwilive/shared": "workspace:^",
         "bcryptjs": "^3.0.3",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",

@@ -1,6 +1,7 @@
 {
   "name": "@dwilive/shared",
   "version": "1.0.0",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -23,6 +24,11 @@
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js",
       "default": "./dist/utils/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/socket.d.ts",
+      "import": "./dist/types/socket.js",
+      "default": "./dist/types/socket.js"
     }
   },
   "scripts": {

@@ -2,7 +2,7 @@ import type { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import User from "../models/User.js";
-import type { IJwtPayload } from "../controllers/auth.js";
+import type { IJwtPayload } from "../controllers/auth.controller.js";
 
 export const protect: RequestHandler = async (req, res, next) => {
     let token: string | undefined;

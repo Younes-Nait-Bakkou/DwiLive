@@ -1,0 +1,15 @@
+{
+  "name": "dwilive-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "clean": "rm -rf node_modules packages/*/node_modules"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

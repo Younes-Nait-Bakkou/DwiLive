@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import type { UserDTO } from "@dwilive/shared";
+
 import { MOCK_USERS } from "../mocks";
 
 export const useUsers = () => {
@@ -7,7 +9,6 @@ export const useUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API network delay
     const timer = setTimeout(() => {
       setData(MOCK_USERS);
       setIsLoading(false);

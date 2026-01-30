@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import type { ConversationDTO } from "@dwilive/shared";
+
 import { MOCK_CONVERSATIONS } from "../mocks";
 
 export const useConversations = () => {
@@ -7,7 +9,6 @@ export const useConversations = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API network delay
     const timer = setTimeout(() => {
       setData(MOCK_CONVERSATIONS);
       setIsLoading(false);

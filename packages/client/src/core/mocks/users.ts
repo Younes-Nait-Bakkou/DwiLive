@@ -17,7 +17,6 @@ export const MOCK_USERS: UserDTO[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
-  // ... more users
 ];
 
-export const CURRENT_USER: UserDTO = MOCK_USERS[0]; // Useful for "Me" simulation
+export const CURRENT_USER: UserDTO = MOCK_USERS[0];

@@ -8,6 +8,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@core": path.resolve(__dirname, "./src/core"),
+      // Vite will automatically resolve and build the shared package
+      "@dwilive/shared": path.resolve(__dirname, "../shared/src"),
     },
   },
 });

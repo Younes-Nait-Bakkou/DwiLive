@@ -1,7 +1,15 @@
 import type { IConversation } from "../models/Conversation.js";
 import type { IMessage } from "../models/Message.js";
 import type { IUser } from "../models/User.js";
-import type { ConversationDomain } from "@dwilive/shared/domains";
+import type {
+    AddMemberResponse,
+    ConversationDTO,
+    CreateConversationResponse,
+    GetConversationsResponse,
+    GetMessagesResponse,
+    LeaveConversationResponse,
+    RemoveMemberResponse,
+} from "@dwilive/shared/domains";
 import { toPublicId } from "../utils/ids.js";
 import { isPopulated } from "../utils/typeGuards.js";
 import { MessageMapper, UserMapper } from "./index.js";
@@ -9,7 +17,7 @@ import { MessageMapper, UserMapper } from "./index.js";
 const _toConversationDTO = (
     conversation: IConversation,
     currentUserId: string,
-): ConversationDomain.ConversationDTO => {
+): ConversationDTO => {
     let name = conversation.name;
 
     if (!name && conversation.type === "direct") {
@@ -60,39 +68,39 @@ const _toConversationDTO = (
 export const toCreateConversationResponse = (
     conversation: IConversation,
     currentUserId: string,
-): ConversationDomain.CreateConversationResponse => {
+): CreateConversationResponse => {
     return _toConversationDTO(conversation, currentUserId);
 };
 export const toGetConversationsResponse = (
     conversations: IConversation[],
     currentUserId: string,
-): ConversationDomain.GetConversationsResponse => {
+): GetConversationsResponse => {
     return conversations.map((c) => _toConversationDTO(c, currentUserId));
 };
 
 export const toAddMemberResponse = (
     conversation: IConversation,
     currentUserId: string,
-): ConversationDomain.AddMemberResponse => {
+): AddMemberResponse => {
     return _toConversationDTO(conversation, currentUserId);
 };
 
 export const toRemoveMemberResponse = (
     conversation: IConversation,
     currentUserId: string,
-): ConversationDomain.RemoveMemberResponse => {
+): RemoveMemberResponse => {
     return _toConversationDTO(conversation, currentUserId);
 };
 
 export const toLeaveConversationResponse = (
     conversation: IConversation,
     currentUserId: string,
-): ConversationDomain.LeaveConversationResponse => {
+): LeaveConversationResponse => {
     return _toConversationDTO(conversation, currentUserId);
 };
 
 export const toGetMessagesResponse = (
     messages: IMessage[],
-): ConversationDomain.GetMessagesResponse => {
+): GetMessagesResponse => {
     return messages.map((m) => MessageMapper.toMessageDTO(m));
 };

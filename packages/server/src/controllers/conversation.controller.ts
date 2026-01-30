@@ -3,12 +3,28 @@ import Message, { type IMessage } from "../models/Message.js";
 import mongoose, { type QueryFilter } from "mongoose";
 import { log } from "node:console";
 import type { AuthHandler } from "../types/api.js";
-import type { ConversationDomain } from "@dwilive/shared/domains";
 import { ConversationMapper, MessageMapper } from "../mappers/index.js";
+import type {
+    CreateConversationBody,
+    CreateConversationResponse,
+    GetConversationsResponse,
+    AddMemberBody,
+    AddMemberResponse,
+    AddMemberParams,
+    RemoveMemberResponse,
+    RemoveMemberParams,
+    GetMessagesResponse,
+    GetMessagesParams,
+    GetMessagesQuery,
+    LeaveConversationResponse,
+    LeaveConversationParams,
+    JoinConversationResponse,
+    JoinConversationParams,
+} from "@dwilive/shared";
 
 export const createConversation: AuthHandler<
-    ConversationDomain.CreateConversationBody,
-    ConversationDomain.CreateConversationResponse
+    CreateConversationBody,
+    CreateConversationResponse
 > = async (req, res) => {
     try {
         const { type, participants, name, isPrivate } = req.body;
@@ -88,7 +104,7 @@ export const createConversation: AuthHandler<
 
 export const getConversations: AuthHandler<
     void,
-    ConversationDomain.GetConversationsResponse
+    GetConversationsResponse
 > = async (req, res) => {
     try {
         if (!req.user) {
@@ -132,9 +148,9 @@ export const getConversations: AuthHandler<
 };
 
 export const addMember: AuthHandler<
-    ConversationDomain.AddMemberBody,
-    ConversationDomain.AddMemberResponse,
-    ConversationDomain.AddMemberParams
+    AddMemberBody,
+    AddMemberResponse,
+    AddMemberParams
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -189,8 +205,8 @@ export const addMember: AuthHandler<
 
 export const removeMember: AuthHandler<
     void,
-    ConversationDomain.RemoveMemberResponse,
-    ConversationDomain.RemoveMemberParams
+    RemoveMemberResponse,
+    RemoveMemberParams
 > = async (req, res) => {
     try {
         const { conversationId, userId } = req.params;
@@ -248,9 +264,9 @@ export const removeMember: AuthHandler<
 
 export const getMessages: AuthHandler<
     void,
-    ConversationDomain.GetMessagesResponse,
-    ConversationDomain.GetMessagesParams,
-    ConversationDomain.GetMessagesQuery
+    GetMessagesResponse,
+    GetMessagesParams,
+    GetMessagesQuery
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -300,8 +316,8 @@ export const getMessages: AuthHandler<
 
 export const leaveConversation: AuthHandler<
     void,
-    ConversationDomain.LeaveConversationResponse,
-    ConversationDomain.LeaveConversationParams
+    LeaveConversationResponse,
+    LeaveConversationParams
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -356,8 +372,8 @@ export const leaveConversation: AuthHandler<
 
 export const joinConversation: AuthHandler<
     void,
-    ConversationDomain.JoinConversationResponse,
-    ConversationDomain.JoinConversationParams
+    JoinConversationResponse,
+    JoinConversationParams
 > = async (req, res) => {
     try {
         const { conversationId } = req.params;

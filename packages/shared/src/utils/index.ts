@@ -1,1 +1,1 @@
-export * as ZodUtils from "./zod.js";
+export * from "./zod.js";

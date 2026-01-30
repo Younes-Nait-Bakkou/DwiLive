@@ -1,21 +1,24 @@
 import User, { type IUser } from "../models/User.js";
 import mongoose, { type QueryFilter } from "mongoose";
-import { UserDomain } from "@dwilive/shared/domains";
 import { UserMapper } from "../mappers/index.js";
 import type { AuthHandler } from "../types/api.js";
+import type {
+    GetMeResponse,
+    UpdateMeBody,
+    UpdateMeResponse,
+    SearchUsersResponse,
+    SearchUsersQuery,
+} from "@dwilive/shared";
 
-export const getMe: AuthHandler<void, UserDomain.GetMeResponse> = async (
-    req,
-    res,
-) => {
+export const getMe: AuthHandler<void, GetMeResponse> = async (req, res) => {
     const response = UserMapper.toGetMeResponse(req.user);
     return res.json(response);
 };
 
-export const updateMe: AuthHandler<
-    UserDomain.UpdateMeBody,
-    UserDomain.UpdateMeResponse
-> = async (req, res) => {
+export const updateMe: AuthHandler<UpdateMeBody, UpdateMeResponse> = async (
+    req,
+    res,
+) => {
     try {
         const { displayName, avatarUrl } = req.body;
         const user = await User.findById(req.user._id);
@@ -48,9 +51,9 @@ export const updateMe: AuthHandler<
 
 export const searchUsers: AuthHandler<
     void,
-    UserDomain.SearchUsersResponse,
+    SearchUsersResponse,
     void,
-    UserDomain.SearchUsersQuery
+    SearchUsersQuery
 > = async (req, res) => {
     try {
         const { q: searchTerm } = req.query;

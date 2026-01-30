@@ -1,33 +1,32 @@
-import { z } from "../utils/zod.js";
-import { ZodUtils } from "../utils/index.js";
+import { createPrefixedIdSchema, z } from "../utils/zod.js";
 
 // --- Types (DTOs) ---
 export interface UserDTO {
-    id: string;
-    username: string;
-    displayName: string;
-    avatarUrl: string | null;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --- Schemas ---
-export const UserIdSchema = ZodUtils.createPrefixedIdSchema("user", {
-    invalidError: "User ID is invalid",
-    requiredError: "User ID is required",
+export const UserIdSchema = createPrefixedIdSchema("user", {
+  invalidError: "User ID is invalid",
+  requiredError: "User ID is required",
 });
 
 export const UpdateMeSchema = z.object({
-    body: z.object({
-        displayName: z.string().optional(),
-        avatarUrl: z.url().optional(),
-    }),
+  body: z.object({
+    displayName: z.string().optional(),
+    avatarUrl: z.url().optional(),
+  }),
 });
 
 export const SearchUsersSchema = z.object({
-    query: z.object({
-        q: z.string().min(1, "Search query cannot be empty"),
-    }),
+  query: z.object({
+    q: z.string().min(1, "Search query cannot be empty"),
+  }),
 });
 
 // --- Derived Types ---

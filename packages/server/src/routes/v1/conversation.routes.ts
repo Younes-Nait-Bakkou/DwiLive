@@ -10,8 +10,15 @@ import {
 } from "../../controllers/conversation.controller.js";
 import { protect } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validateResource.js";
-import { ConversationDomain } from "@dwilive/shared/domains";
 import { withAuth } from "../../utils/routes.js";
+import {
+    CreateConversationSchema,
+    AddMemberSchema,
+    RemoveMemberSchema,
+    GetMessagesSchema,
+    JoinConversationSchema,
+    LeaveConversationSchema,
+} from "@dwilive/shared";
 
 const router: Router = Router();
 
@@ -19,34 +26,34 @@ router.use(protect);
 
 router.post(
     "/",
-    validate(ConversationDomain.CreateConversationSchema),
+    validate(CreateConversationSchema),
     withAuth(createConversation),
 );
 router.get("/", withAuth(getConversations));
 router.post(
     "/:conversationId/members",
-    validate(ConversationDomain.AddMemberSchema),
+    validate(AddMemberSchema),
     withAuth(addMember),
 );
 router.delete(
     "/:conversationId/members/:userId",
-    validate(ConversationDomain.RemoveMemberSchema),
+    validate(RemoveMemberSchema),
     withAuth(removeMember),
 );
 router.get(
     "/:conversationId/messages",
-    validate(ConversationDomain.GetMessagesSchema),
+    validate(GetMessagesSchema),
     withAuth(getMessages),
 );
 
 router.post(
     "/:conversationId/join",
-    validate(ConversationDomain.JoinConversationSchema),
+    validate(JoinConversationSchema),
     withAuth(joinConversation),
 );
 router.post(
     "/:conversationId/leave",
-    validate(ConversationDomain.LeaveConversationSchema),
+    validate(LeaveConversationSchema),
     withAuth(leaveConversation),
 );
 

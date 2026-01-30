@@ -1,11 +1,12 @@
 import { SocketEvent } from "./socket-events.js";
 import type { EventCallback } from "../types/socket.js";
-import type { MessageDomain, UserDomain } from "../domains/index.js";
 import type {
   SendMessagePayload,
   StartTypingPayload,
   StopTypingPayload,
 } from "../domains/socket.js";
+import type { MessageDTO } from "../domains/message.js";
+import type { UserDTO } from "../domains/user.js";
 
 // --- 1. SERVER -> CLIENT (Strict DTOs for React State) ---
 export interface ServerToClientEvents {
@@ -13,9 +14,7 @@ export interface ServerToClientEvents {
    * Triggered when ANY message is created (Text, Image, OR System).
    * Frontend: Append to message list.
    */
-  [SocketEvent.Server.RECEIVE_MESSAGE]: (
-    message: MessageDomain.MessageDTO,
-  ) => void;
+  [SocketEvent.Server.RECEIVE_MESSAGE]: (message: MessageDTO) => void;
 
   /**
    * Triggered when a user joins voluntarily via link.
@@ -23,7 +22,7 @@ export interface ServerToClientEvents {
    */
   [SocketEvent.Server.USER_JOINED_CONVERSATION]: (data: {
     conversationId: string;
-    user: UserDomain.UserDTO;
+    user: UserDTO;
   }) => void;
 
   /**
@@ -41,7 +40,7 @@ export interface ServerToClientEvents {
    */
   [SocketEvent.Server.MEMBER_ADDED_TO_CONVERSATION]: (data: {
     conversationId: string;
-    addedUser: UserDomain.UserDTO;
+    addedUser: UserDTO;
     adminId: string; // Context for UI (optional)
   }) => void;
 

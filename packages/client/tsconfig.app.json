@@ -11,7 +11,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@core/*": ["./src/core/*"]
+      "@core/*": ["./src/core/*"],
+      "@dwilive/shared/*": ["../shared/src/*"]
     },
 
     /* Bundler mode */
@@ -30,5 +31,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
+  "references": [{ "path": "../shared" }],
   "include": ["src"]
 }

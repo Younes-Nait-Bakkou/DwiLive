@@ -1,11 +1,11 @@
 import type { IMessage } from "../models/Message.js";
 import type { IUser } from "../models/User.js";
-import type { MessageDomain } from "@dwilive/shared/domains";
+import type { SystemMessageDTO, MessageDTO } from "@dwilive/shared";
 import { toPublicId } from "../utils/ids.js";
 import { isPopulated } from "../utils/typeGuards.js";
 import { UserMapper } from "./index.js";
 
-export const toMessageDTO = (message: IMessage): MessageDomain.MessageDTO => {
+export const toMessageDTO = (message: IMessage): MessageDTO => {
     const conversationId = toPublicId("conv", message.conversation);
 
     const base = {
@@ -21,7 +21,7 @@ export const toMessageDTO = (message: IMessage): MessageDomain.MessageDTO => {
             sender: null,
             content: message.content,
             metadata: message.metadata,
-        } as MessageDomain.SystemMessageDTO;
+        } as SystemMessageDTO;
     }
 
     if (!message.sender || !isPopulated<IUser>(message.sender)) {

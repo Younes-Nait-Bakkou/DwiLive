@@ -2,16 +2,16 @@ import {
     OpenAPIRegistry,
     OpenApiGeneratorV3,
 } from "@asteasolutions/zod-to-openapi";
-import { AuthDomain } from "@dwilive/shared/domains";
 import fs from "fs";
 import path from "path";
 import config from "../config/index.js";
+import { LoginSchema, RegisterSchema } from "@dwilive/shared";
 
 const registry = new OpenAPIRegistry();
 
 // Register the schemas
-registry.register("Login", AuthDomain.LoginSchema);
-registry.register("Register", AuthDomain.RegisterSchema);
+registry.register("Login", LoginSchema);
+registry.register("Register", RegisterSchema);
 
 // Register the paths
 registry.registerPath({
@@ -22,7 +22,7 @@ registry.registerPath({
         body: {
             content: {
                 "application/json": {
-                    schema: AuthDomain.RegisterSchema.shape.body,
+                    schema: RegisterSchema.shape.body,
                 },
             },
         },
@@ -42,7 +42,7 @@ registry.registerPath({
         body: {
             content: {
                 "application/json": {
-                    schema: AuthDomain.LoginSchema.shape.body,
+                    schema: LoginSchema.shape.body,
                 },
             },
         },
